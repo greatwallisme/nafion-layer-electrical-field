@@ -41,22 +41,10 @@ private:
 
 class EquationCoefficient
 {
+	friend class solver;
 public:
 	EquationCoefficient(const IonSystem& fIons, const mesh& phase, const PotentialSignal& fSignal, const nernst_equation& fThermo);
 	void CalculateCoeff(Eigen::MatrixXd& GeoCoeffA, Eigen::MatrixXd GeoCoeffB);
-
-	const Eigen::MatrixXd& GetCoeffProductA() const { return CoeffProductA; }
-	const Eigen::MatrixXd& GetCoeffProductB() const { return CoeffProductB; }
-	const Eigen::MatrixXd& GetCoeffReactantA() const { return CoeffReactantA; }
-	const Eigen::MatrixXd& GetCoeffReactantB() const { return CoeffReactantB; }
-	const Eigen::MatrixXd& GetCoeffAnionA() const { return CoeffAnionA; }
-	const Eigen::MatrixXd& GetCoeffAnionB() const { return CoeffAnionB;  }
-	const Eigen::MatrixXd& GetCoeffCationA() const { return CoeffCationA; }
-	const Eigen::MatrixXd& GetCoeffCationB() const { return CoeffCationB; }
-	const Eigen::MatrixXd& GetCoeffPotentialA() const { return CoeffPotentialA; }
-	const Eigen::MatrixXd& GetCoeffPotentialB() const { return CoeffPotentialB; }
-
-	
 
 private:
 	Eigen::MatrixXd CoeffProductA;

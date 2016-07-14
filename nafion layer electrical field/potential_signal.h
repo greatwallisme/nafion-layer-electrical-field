@@ -11,13 +11,13 @@ public:
 	virtual void RecordData() const = 0;
 	virtual void SavePeakConcentration() const = 0;
 	virtual void SaveCurrent() const = 0;
-	const double Getdt() const { return dt; };
+	const double dt; // delta time between each time node, s
 
 protected:
 	const double E0; // starting potential, V
 	const double Eend; // end potential, V
 	const double dE; // step potential, V
-	const double dt; // delta time between each time node, s
+	
 };
 
 class SquareWave : public PotentialSignal

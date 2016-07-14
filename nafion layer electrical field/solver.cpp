@@ -224,206 +224,206 @@ void solver::CalculateF()
 			if (i > 1 && j > 1 && i < membrane.m - 1 && i < membrane.n - 1) {
 				//Reactant
 				F(rea_j_i) =
-					M.GetCoeffReactantA()(1, j) * X(rea_jm1_i) + M.GetCoeffReactantA()(2, j) * X(rea_jp1_i)
-					+ M.GetCoeffReactantB()(1, i) * X(rea_j_im1) + M.GetCoeffReactantB()(2, i) * X(rea_j_ip1)
-					+ (M.GetCoeffReactantA()(0, j) + M.GetCoeffReactantB()(0, i))*X(rea_j_i)
+					M.CoeffReactantA(1, j) * X(rea_jm1_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
+					+ M.CoeffReactantB(1, i) * X(rea_j_im1) + M.CoeffReactantB(2, i) * X(rea_j_ip1)
+					+ (M.CoeffReactantA(0, j) + M.CoeffReactantB(0, i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantA()(4, j)*(X(rea_jp1_i) - X(rea_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffReactantA(4, j)*(X(rea_jp1_i) - X(rea_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffReactantA()(5, j) * X(pot_jp1_i) + M.GetCoeffReactantA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffReactantB()(5, i) * X(pot_j_ip1) + M.GetCoeffReactantB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffReactantA()(3, j) + M.GetCoeffReactantB()(3, i))*X(pot_j_i))*X(rea_j_i)
+					+ (M.CoeffReactantA(5, j) * X(pot_jp1_i) + M.CoeffReactantA(6, j) * X(pot_jm1_i)
+						+ M.CoeffReactantB(5, i) * X(pot_j_ip1) + M.CoeffReactantB(6, i) * X(pot_j_im1)
+						+ (M.CoeffReactantA(3, j) + M.CoeffReactantB(3, i))*X(pot_j_i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantB()(4, i) * (X(rea_j_ip1) - X(rea_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+					+ M.CoeffReactantB(4, i) * (X(rea_j_ip1) - X(rea_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Cren(j, i);
 				//Product
 				F(pro_j_i) =
-					M.GetCoeffProductA()(1, j) * X(pro_jm1_i) + M.GetCoeffProductA()(2, j) * X(pro_jp1_i)
-					+ M.GetCoeffProductB()(1, i) * X(pro_j_im1) + M.GetCoeffProductB()(2, i) * X(pro_j_ip1)
-					+ (M.GetCoeffProductA()(0, j) + M.GetCoeffProductB()(0, i))*X(pro_j_i)
+					M.CoeffProductA(1, j) * X(pro_jm1_i) + M.CoeffProductA(2, j) * X(pro_jp1_i)
+					+ M.CoeffProductB(1, i) * X(pro_j_im1) + M.CoeffProductB(2, i) * X(pro_j_ip1)
+					+ (M.CoeffProductA(0, j) + M.CoeffProductB(0, i))*X(pro_j_i)
 
-					+ M.GetCoeffProductA()(4, j)*(X(pro_jp1_i) - X(pro_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffProductA(4, j)*(X(pro_jp1_i) - X(pro_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffProductA()(5, j) * X(pot_jp1_i) + M.GetCoeffProductA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffProductB()(5, i) * X(pot_j_ip1) + M.GetCoeffProductB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffProductA()(3, j) + M.GetCoeffProductB()(3, i))*X(pot_j_i))*X(pro_j_i)
+					+ (M.CoeffProductA(5, j) * X(pot_jp1_i) + M.CoeffProductA(6, j) * X(pot_jm1_i)
+						+ M.CoeffProductB(5, i) * X(pot_j_ip1) + M.CoeffProductB(6, i) * X(pot_j_im1)
+						+ (M.CoeffProductA(3, j) + M.CoeffProductB(3, i))*X(pot_j_i))*X(pro_j_i)
 
-					+ M.GetCoeffProductB()(4, i) * (X(pro_j_ip1) - X(pro_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+					+ M.CoeffProductB(4, i) * (X(pro_j_ip1) - X(pro_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Cprn(j, i);
 				//Anion
 				F(ani_j_i) =
-					M.GetCoeffAnionA()(1, j) * X(ani_jm1_i) + M.GetCoeffAnionA()(2, j) * X(ani_jp1_i)
-					+ M.GetCoeffAnionB()(1, i) * X(ani_j_im1) + M.GetCoeffAnionB()(2, i) * X(ani_j_ip1)
-					+ (M.GetCoeffAnionA()(0, j) + M.GetCoeffAnionB()(0, i))*X(ani_j_i)
+					M.CoeffAnionA(1, j) * X(ani_jm1_i) + M.CoeffAnionA(2, j) * X(ani_jp1_i)
+					+ M.CoeffAnionB(1, i) * X(ani_j_im1) + M.CoeffAnionB(2, i) * X(ani_j_ip1)
+					+ (M.CoeffAnionA(0, j) + M.CoeffAnionB(0, i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionA()(4, j)*(X(ani_jp1_i) - X(ani_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffAnionA(4, j)*(X(ani_jp1_i) - X(ani_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffAnionA()(5, j) * X(pot_jp1_i) + M.GetCoeffAnionA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffAnionB()(5, i) * X(pot_j_ip1) + M.GetCoeffAnionB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffAnionA()(3, j) + M.GetCoeffAnionB()(3, i))*X(pot_j_i))*X(ani_j_i)
+					+ (M.CoeffAnionA(5, j) * X(pot_jp1_i) + M.CoeffAnionA(6, j) * X(pot_jm1_i)
+						+ M.CoeffAnionB(5, i) * X(pot_j_ip1) + M.CoeffAnionB(6, i) * X(pot_j_im1)
+						+ (M.CoeffAnionA(3, j) + M.CoeffAnionB(3, i))*X(pot_j_i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionB()(4, i) * (X(ani_j_ip1) - X(ani_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+					+ M.CoeffAnionB(4, i) * (X(ani_j_ip1) - X(ani_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Cann(j, i);
 				//Cation
 				F(cat_j_i) =
-					M.GetCoeffCationA()(1, j) * X(cat_jm1_i) + M.GetCoeffCationA()(2, j) * X(cat_jp1_i)
-					+ M.GetCoeffCationB()(1, i) * X(cat_j_im1) + M.GetCoeffCationB()(2, i) * X(cat_j_ip1)
-					+ (M.GetCoeffCationA()(0, j) + M.GetCoeffCationB()(0, i))*X(cat_j_i)
+					M.CoeffCationA(1, j) * X(cat_jm1_i) + M.CoeffCationA(2, j) * X(cat_jp1_i)
+					+ M.CoeffCationB(1, i) * X(cat_j_im1) + M.CoeffCationB(2, i) * X(cat_j_ip1)
+					+ (M.CoeffCationA(0, j) + M.CoeffCationB(0, i))*X(cat_j_i)
 
-					+ M.GetCoeffCationA()(4, j)*(X(cat_jp1_i) - X(cat_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffCationA(4, j)*(X(cat_jp1_i) - X(cat_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffCationA()(5, j) * X(pot_jp1_i) + M.GetCoeffCationA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffCationB()(5, i) * X(pot_j_ip1) + M.GetCoeffCationB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffCationA()(3, j) + M.GetCoeffCationB()(3, i))*X(pot_j_i))*X(cat_j_i)
+					+ (M.CoeffCationA(5, j) * X(pot_jp1_i) + M.CoeffCationA(6, j) * X(pot_jm1_i)
+						+ M.CoeffCationB(5, i) * X(pot_j_ip1) + M.CoeffCationB(6, i) * X(pot_j_im1)
+						+ (M.CoeffCationA(3, j) + M.CoeffCationB(3, i))*X(pot_j_i))*X(cat_j_i)
 
-					+ M.GetCoeffCationB()(4, i) * (X(cat_j_ip1) - X(cat_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+					+ M.CoeffCationB(4, i) * (X(cat_j_ip1) - X(cat_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Ccan(j, i);
 				//Potential
 				F(pot_j_i) =
-					M.GetCoeffPotentialA()(1, j) * X(pot_jm1_i) + M.GetCoeffPotentialA()(2, j) * X(pot_jp1_i)
-					+ M.GetCoeffPotentialB()(1, i) * X(pot_j_im1) + M.GetCoeffPotentialB()(2, i) * X(pot_j_ip1)
-					+ (M.GetCoeffPotentialA()(0, j) + M.GetCoeffPotentialB()(0, i)) * X(pot_j_i)
-					+ (MI.GetReactant().GetZ()*X(rea_j_i) + MI.GetProduct().GetZ()*X(pro_j_i)
-						+ MI.GetSupportAnion().GetZ()*X(ani_j_i) + MI.GetSupportCation().GetZ()*X(cat_j_i)
-						+ MI.GetCxZImmobileCharge())*MI.GetReciprocalEpsilon_rEpsilon_0()*Thermo.GetF();
+					M.CoeffPotentialA(1, j) * X(pot_jm1_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
+					+ M.CoeffPotentialB(1, i) * X(pot_j_im1) + M.CoeffPotentialB(2, i) * X(pot_j_ip1)
+					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
+					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
+						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
+						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 			}
 			else if (j == 0 && i > 1 && i < membrane.m - 1) {
 				// Reactant:
-				double reactionRate = X(rea_j_i)*Thermo.Getk0()*exp(-Thermo.GetAlfa() * Thermo.GetF_R_T()*(Signal.AppliedPotential() - Thermo.GetE_formal() - X(pot_j_i)))
-					- X(pro_j_i)*Thermo.Getk0()*exp((Thermo.GetAlfa() - 1)*Thermo.GetF_R_T()*(Signal.AppliedPotential() - Thermo.GetE_formal() - X(pot_j_i)));
+				double reactionRate = X(rea_j_i)*Thermo.k0*exp(-Thermo.alfa * Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)))
+					- X(pro_j_i)*Thermo.k0*exp((Thermo.alfa - 1)*Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)));
 				F(rea_j_i) =
-					M.GetCoeffReactantA()(1, j) * X(rea_j_i) + M.GetCoeffReactantA()(2, j) * X(rea_jp1_i)
-					+ M.GetCoeffReactantB()(1, i) * X(rea_j_im1) + M.GetCoeffReactantB()(2, i) * X(rea_j_ip1)
-					+ (M.GetCoeffReactantA()(0, j) + M.GetCoeffReactantB()(0, i))*X(rea_j_i)
+					M.CoeffReactantA(1, j) * X(rea_j_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
+					+ M.CoeffReactantB(1, i) * X(rea_j_im1) + M.CoeffReactantB(2, i) * X(rea_j_ip1)
+					+ (M.CoeffReactantA(0, j) + M.CoeffReactantB(0, i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantA()(4, j)*(X(rea_jp1_i) - X(rea_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffReactantA(4, j)*(X(rea_jp1_i) - X(rea_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffReactantA()(5, j) * X(pot_jp1_i) + M.GetCoeffReactantA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffReactantB()(5, i) * X(pot_j_ip1) + M.GetCoeffReactantB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffReactantA()(3, j) + M.GetCoeffReactantB()(3, i))*X(pot_j_i))*X(rea_j_i)
+					+ (M.CoeffReactantA(5, j) * X(pot_jp1_i) + M.CoeffReactantA(6, j) * X(pot_j_i)
+						+ M.CoeffReactantB(5, i) * X(pot_j_ip1) + M.CoeffReactantB(6, i) * X(pot_j_im1)
+						+ (M.CoeffReactantA(3, j) + M.CoeffReactantB(3, i))*X(pot_j_i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantB()(4, i) * (X(rea_j_ip1) - X(rea_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+					+ M.CoeffReactantB(4, i) * (X(rea_j_ip1) - X(rea_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Cren(j, i)
 					- reactionRate;
 				// Product:
 				F(pro_j_i) =
-					M.GetCoeffProductA()(1, j) * X(pro_j_i) + M.GetCoeffProductA()(2, j) * X(pro_jp1_i)
-					+ M.GetCoeffProductB()(1, i) * X(pro_j_im1) + M.GetCoeffProductB()(2, i) * X(pro_j_ip1)
-					+ (M.GetCoeffProductA()(0, j) + M.GetCoeffProductB()(0, i))*X(pro_j_i)
+					M.CoeffProductA(1, j) * X(pro_j_i) + M.CoeffProductA(2, j) * X(pro_jp1_i)
+					+ M.CoeffProductB(1, i) * X(pro_j_im1) + M.CoeffProductB(2, i) * X(pro_j_ip1)
+					+ (M.CoeffProductA(0, j) + M.CoeffProductB(0, i))*X(pro_j_i)
 
-					+ M.GetCoeffProductA()(4, j)*(X(pro_jp1_i) - X(pro_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffProductA(4, j)*(X(pro_jp1_i) - X(pro_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffProductA()(5, j) * X(pot_jp1_i) + M.GetCoeffProductA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffProductB()(5, i) * X(pot_j_ip1) + M.GetCoeffProductB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffProductA()(3, j) + M.GetCoeffProductB()(3, i))*X(pot_j_i))*X(pro_j_i)
+					+ (M.CoeffProductA(5, j) * X(pot_jp1_i) + M.CoeffProductA(6, j) * X(pot_j_i)
+						+ M.CoeffProductB(5, i) * X(pot_j_ip1) + M.CoeffProductB(6, i) * X(pot_j_im1)
+						+ (M.CoeffProductA(3, j) + M.CoeffProductB(3, i))*X(pot_j_i))*X(pro_j_i)
 
-					+ M.GetCoeffProductB()(4, i) * (X(pro_j_ip1) - X(pro_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+					+ M.CoeffProductB(4, i) * (X(pro_j_ip1) - X(pro_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Cprn(j, i)
 					+ reactionRate;
 				// Anion
 				F(ani_j_i) =
-					M.GetCoeffAnionA()(1, j) * X(ani_j_i) + M.GetCoeffAnionA()(2, j) * X(ani_jp1_i)
-					+ M.GetCoeffAnionB()(1, i) * X(ani_j_im1) + M.GetCoeffAnionB()(2, i) * X(ani_j_ip1)
-					+ (M.GetCoeffAnionA()(0, j) + M.GetCoeffAnionB()(0, i))*X(ani_j_i)
+					M.CoeffAnionA(1, j) * X(ani_j_i) + M.CoeffAnionA(2, j) * X(ani_jp1_i)
+					+ M.CoeffAnionB(1, i) * X(ani_j_im1) + M.CoeffAnionB(2, i) * X(ani_j_ip1)
+					+ (M.CoeffAnionA(0, j) + M.CoeffAnionB(0, i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionA()(4, j)*(X(ani_jp1_i) - X(ani_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffAnionA(4, j)*(X(ani_jp1_i) - X(ani_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffAnionA()(5, j) * X(pot_jp1_i) + M.GetCoeffAnionA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffAnionB()(5, i) * X(pot_j_ip1) + M.GetCoeffAnionB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffAnionA()(3, j) + M.GetCoeffAnionB()(3, i))*X(pot_j_i))*X(ani_j_i)
+					+ (M.CoeffAnionA(5, j) * X(pot_jp1_i) + M.CoeffAnionA(6, j) * X(pot_j_i)
+						+ M.CoeffAnionB(5, i) * X(pot_j_ip1) + M.CoeffAnionB(6, i) * X(pot_j_im1)
+						+ (M.CoeffAnionA(3, j) + M.CoeffAnionB(3, i))*X(pot_j_i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionB()(4, i) * (X(ani_j_ip1) - X(ani_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+					+ M.CoeffAnionB(4, i) * (X(ani_j_ip1) - X(ani_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Cann(j, i);
 				// Cation
 				F(cat_j_i) =
 					F(cat_j_i) =
-					M.GetCoeffCationA()(1, j) * X(cat_j_i) + M.GetCoeffCationA()(2, j) * X(cat_jp1_i)
-					+ M.GetCoeffCationB()(1, i) * X(cat_j_im1) + M.GetCoeffCationB()(2, i) * X(cat_j_ip1)
-					+ (M.GetCoeffCationA()(0, j) + M.GetCoeffCationB()(0, i))*X(cat_j_i)
+					M.CoeffCationA(1, j) * X(cat_j_i) + M.CoeffCationA(2, j) * X(cat_jp1_i)
+					+ M.CoeffCationB(1, i) * X(cat_j_im1) + M.CoeffCationB(2, i) * X(cat_j_ip1)
+					+ (M.CoeffCationA(0, j) + M.CoeffCationB(0, i))*X(cat_j_i)
 
-					+ M.GetCoeffCationA()(4, j)*(X(cat_jp1_i) - X(cat_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffCationA(4, j)*(X(cat_jp1_i) - X(cat_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffCationA()(5, j) * X(pot_jp1_i) + M.GetCoeffCationA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffCationB()(5, i) * X(pot_j_ip1) + M.GetCoeffCationB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffCationA()(3, j) + M.GetCoeffCationB()(3, i))*X(pot_j_i))*X(cat_j_i)
+					+ (M.CoeffCationA(5, j) * X(pot_jp1_i) + M.CoeffCationA(6, j) * X(pot_j_i)
+						+ M.CoeffCationB(5, i) * X(pot_j_ip1) + M.CoeffCationB(6, i) * X(pot_j_im1)
+						+ (M.CoeffCationA(3, j) + M.CoeffCationB(3, i))*X(pot_j_i))*X(cat_j_i)
 
-					+ M.GetCoeffCationB()(4, i) * (X(cat_j_ip1) - X(cat_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+					+ M.CoeffCationB(4, i) * (X(cat_j_ip1) - X(cat_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Ccan(j, i);
 				// Potential
 				F(pot_j_i) =
 					F(pot_j_i) =
-					M.GetCoeffPotentialA()(1, j) * X(pot_j_i) + M.GetCoeffPotentialA()(2, j) * X(pot_jp1_i)
-					+ M.GetCoeffPotentialB()(1, i) * X(pot_j_im1) + M.GetCoeffPotentialB()(2, i) * X(pot_j_ip1)
-					+ (M.GetCoeffPotentialA()(0, j) + M.GetCoeffPotentialB()(0, i)) * X(pot_j_i)
-					+ (MI.GetReactant().GetZ()*X(rea_j_i) + MI.GetProduct().GetZ()*X(pro_j_i)
-						+ MI.GetSupportAnion().GetZ()*X(ani_j_i) + MI.GetSupportCation().GetZ()*X(cat_j_i)
-						+ MI.GetCxZImmobileCharge())*MI.GetReciprocalEpsilon_rEpsilon_0()*Thermo.GetF();
+					M.CoeffPotentialA(1, j) * X(pot_j_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
+					+ M.CoeffPotentialB(1, i) * X(pot_j_im1) + M.CoeffPotentialB(2, i) * X(pot_j_ip1)
+					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
+					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
+						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
+						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 			}
 			else if (i == 0 && j > 0 && j < membrane.n - 1) {
 				//Reactant
 				F(rea_j_i) =
-					M.GetCoeffReactantA()(1, j) * X(rea_jm1_i) + M.GetCoeffReactantA()(2, j) * X(rea_jp1_i)
-					+ M.GetCoeffReactantB()(1, i) * X(rea_j_i) + M.GetCoeffReactantB()(2, i) * X(rea_j_ip1)
-					+ (M.GetCoeffReactantA()(0, j) + M.GetCoeffReactantB()(0, i))*X(rea_j_i)
+					M.CoeffReactantA(1, j) * X(rea_jm1_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
+					+ M.CoeffReactantB(1, i) * X(rea_j_i) + M.CoeffReactantB(2, i) * X(rea_j_ip1)
+					+ (M.CoeffReactantA(0, j) + M.CoeffReactantB(0, i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantA()(4, j)*(X(rea_jp1_i) - X(rea_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffReactantA(4, j)*(X(rea_jp1_i) - X(rea_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffReactantA()(5, j) * X(pot_jp1_i) + M.GetCoeffReactantA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffReactantB()(5, i) * X(pot_j_ip1) + M.GetCoeffReactantB()(6, i) * X(pot_j_i)
-						+ (M.GetCoeffReactantA()(3, j) + M.GetCoeffReactantB()(3, i))*X(pot_j_i))*X(rea_j_i)
+					+ (M.CoeffReactantA(5, j) * X(pot_jp1_i) + M.CoeffReactantA(6, j) * X(pot_jm1_i)
+						+ M.CoeffReactantB(5, i) * X(pot_j_ip1) + M.CoeffReactantB(6, i) * X(pot_j_i)
+						+ (M.CoeffReactantA(3, j) + M.CoeffReactantB(3, i))*X(pot_j_i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantB()(4, i) * (X(rea_j_ip1) - X(rea_j_i))*(X(pot_j_ip1) - X(pot_j_i))
+					+ M.CoeffReactantB(4, i) * (X(rea_j_ip1) - X(rea_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Cren(j, i);
 				//Product
 				F(pro_j_i) =
-					M.GetCoeffProductA()(1, j) * X(pro_jm1_i) + M.GetCoeffProductA()(2, j) * X(pro_jp1_i)
-					+ M.GetCoeffProductB()(1, i) * X(pro_j_i) + M.GetCoeffProductB()(2, i) * X(pro_j_ip1)
-					+ (M.GetCoeffProductA()(0, j) + M.GetCoeffProductB()(0, i))*X(pro_j_i)
+					M.CoeffProductA(1, j) * X(pro_jm1_i) + M.CoeffProductA(2, j) * X(pro_jp1_i)
+					+ M.CoeffProductB(1, i) * X(pro_j_i) + M.CoeffProductB(2, i) * X(pro_j_ip1)
+					+ (M.CoeffProductA(0, j) + M.CoeffProductB(0, i))*X(pro_j_i)
 
-					+ M.GetCoeffProductA()(4, j)*(X(pro_jp1_i) - X(pro_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffProductA(4, j)*(X(pro_jp1_i) - X(pro_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffProductA()(5, j) * X(pot_jp1_i) + M.GetCoeffProductA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffProductB()(5, i) * X(pot_j_ip1) + M.GetCoeffProductB()(6, i) * X(pot_j_i)
-						+ (M.GetCoeffProductA()(3, j) + M.GetCoeffProductB()(3, i))*X(pot_j_i))*X(pro_j_i)
+					+ (M.CoeffProductA(5, j) * X(pot_jp1_i) + M.CoeffProductA(6, j) * X(pot_jm1_i)
+						+ M.CoeffProductB(5, i) * X(pot_j_ip1) + M.CoeffProductB(6, i) * X(pot_j_i)
+						+ (M.CoeffProductA(3, j) + M.CoeffProductB(3, i))*X(pot_j_i))*X(pro_j_i)
 
-					+ M.GetCoeffProductB()(4, i) * (X(pro_j_ip1) - X(pro_j_i))*(X(pot_j_ip1) - X(pot_j_i))
+					+ M.CoeffProductB(4, i) * (X(pro_j_ip1) - X(pro_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Cprn(j, i);
 				//Anion
 				F(ani_j_i) =
-					M.GetCoeffAnionA()(1, j) * X(ani_jm1_i) + M.GetCoeffAnionA()(2, j) * X(ani_jp1_i)
-					+ M.GetCoeffAnionB()(1, i) * X(ani_j_i) + M.GetCoeffAnionB()(2, i) * X(ani_j_ip1)
-					+ (M.GetCoeffAnionA()(0, j) + M.GetCoeffAnionB()(0, i))*X(ani_j_i)
+					M.CoeffAnionA(1, j) * X(ani_jm1_i) + M.CoeffAnionA(2, j) * X(ani_jp1_i)
+					+ M.CoeffAnionB(1, i) * X(ani_j_i) + M.CoeffAnionB(2, i) * X(ani_j_ip1)
+					+ (M.CoeffAnionA(0, j) + M.CoeffAnionB(0, i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionA()(4, j)*(X(ani_jp1_i) - X(ani_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffAnionA(4, j)*(X(ani_jp1_i) - X(ani_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffAnionA()(5, j) * X(pot_jp1_i) + M.GetCoeffAnionA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffAnionB()(5, i) * X(pot_j_ip1) + M.GetCoeffAnionB()(6, i) * X(pot_j_i)
-						+ (M.GetCoeffAnionA()(3, j) + M.GetCoeffAnionB()(3, i))*X(pot_j_i))*X(ani_j_i)
+					+ (M.CoeffAnionA(5, j) * X(pot_jp1_i) + M.CoeffAnionA(6, j) * X(pot_jm1_i)
+						+ M.CoeffAnionB(5, i) * X(pot_j_ip1) + M.CoeffAnionB(6, i) * X(pot_j_i)
+						+ (M.CoeffAnionA(3, j) + M.CoeffAnionB(3, i))*X(pot_j_i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionB()(4, i) * (X(ani_j_ip1) - X(ani_j_i))*(X(pot_j_ip1) - X(pot_j_i))
+					+ M.CoeffAnionB(4, i) * (X(ani_j_ip1) - X(ani_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Cann(j, i);
 				//Cation
 				F(cat_j_i) =
-					M.GetCoeffCationA()(1, j) * X(cat_jm1_i) + M.GetCoeffCationA()(2, j) * X(cat_jp1_i)
-					+ M.GetCoeffCationB()(1, i) * X(cat_j_i) + M.GetCoeffCationB()(2, i) * X(cat_j_ip1)
-					+ (M.GetCoeffCationA()(0, j) + M.GetCoeffCationB()(0, i))*X(cat_j_i)
+					M.CoeffCationA(1, j) * X(cat_jm1_i) + M.CoeffCationA(2, j) * X(cat_jp1_i)
+					+ M.CoeffCationB(1, i) * X(cat_j_i) + M.CoeffCationB(2, i) * X(cat_j_ip1)
+					+ (M.CoeffCationA(0, j) + M.CoeffCationB(0, i))*X(cat_j_i)
 
-					+ M.GetCoeffCationA()(4, j)*(X(cat_jp1_i) - X(cat_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffCationA(4, j)*(X(cat_jp1_i) - X(cat_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffCationA()(5, j) * X(pot_jp1_i) + M.GetCoeffCationA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffCationB()(5, i) * X(pot_j_ip1) + M.GetCoeffCationB()(6, i) * X(pot_j_i)
-						+ (M.GetCoeffCationA()(3, j) + M.GetCoeffCationB()(3, i))*X(pot_j_i))*X(cat_j_i)
+					+ (M.CoeffCationA(5, j) * X(pot_jp1_i) + M.CoeffCationA(6, j) * X(pot_jm1_i)
+						+ M.CoeffCationB(5, i) * X(pot_j_ip1) + M.CoeffCationB(6, i) * X(pot_j_i)
+						+ (M.CoeffCationA(3, j) + M.CoeffCationB(3, i))*X(pot_j_i))*X(cat_j_i)
 
-					+ M.GetCoeffCationB()(4, i) * (X(cat_j_ip1) - X(cat_j_i))*(X(pot_j_ip1) - X(pot_j_i))
+					+ M.CoeffCationB(4, i) * (X(cat_j_ip1) - X(cat_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Ccan(j, i);
 				//Potential
 				F(pot_j_i) =
-					M.GetCoeffPotentialA()(1, j) * X(pot_jm1_i) + M.GetCoeffPotentialA()(2, j) * X(pot_jp1_i)
-					+ M.GetCoeffPotentialB()(1, i) * X(pot_j_i) + M.GetCoeffPotentialB()(2, i) * X(pot_j_ip1)
-					+ (M.GetCoeffPotentialA()(0, j) + M.GetCoeffPotentialB()(0, i)) * X(pot_j_i)
-					+ (MI.GetReactant().GetZ()*X(rea_j_i) + MI.GetProduct().GetZ()*X(pro_j_i)
-						+ MI.GetSupportAnion().GetZ()*X(ani_j_i) + MI.GetSupportCation().GetZ()*X(cat_j_i)
-						+ MI.GetCxZImmobileCharge())*MI.GetReciprocalEpsilon_rEpsilon_0()*Thermo.GetF();
+					M.CoeffPotentialA(1, j) * X(pot_jm1_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
+					+ M.CoeffPotentialB(1, i) * X(pot_j_i) + M.CoeffPotentialB(2, i) * X(pot_j_ip1)
+					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
+					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
+						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
+						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 			}
 			else if (j == membrane.n - 1 && i > 0 && i < membrane.m - 1) {
 
@@ -431,213 +431,213 @@ void solver::CalculateF()
 			else if (i == membrane.m - 1 && j > 0 && j < membrane.n - 1) {
 				//Reactant
 				F(rea_j_i) =
-					M.GetCoeffReactantA()(1, j) * X(rea_jm1_i) + M.GetCoeffReactantA()(2, j) * X(rea_jp1_i)
-					+ M.GetCoeffReactantB()(1, i) * X(rea_j_im1) + M.GetCoeffReactantB()(2, i) * X(rea_j_i)
-					+ (M.GetCoeffReactantA()(0, j) + M.GetCoeffReactantB()(0, i))*X(rea_j_i)
+					M.CoeffReactantA(1, j) * X(rea_jm1_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
+					+ M.CoeffReactantB(1, i) * X(rea_j_im1) + M.CoeffReactantB(2, i) * X(rea_j_i)
+					+ (M.CoeffReactantA(0, j) + M.CoeffReactantB(0, i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantA()(4, j)*(X(rea_jp1_i) - X(rea_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffReactantA(4, j)*(X(rea_jp1_i) - X(rea_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffReactantA()(5, j) * X(pot_jp1_i) + M.GetCoeffReactantA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffReactantB()(5, i) * X(pot_j_i) + M.GetCoeffReactantB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffReactantA()(3, j) + M.GetCoeffReactantB()(3, i))*X(pot_j_i))*X(rea_j_i)
+					+ (M.CoeffReactantA(5, j) * X(pot_jp1_i) + M.CoeffReactantA(6, j) * X(pot_jm1_i)
+						+ M.CoeffReactantB(5, i) * X(pot_j_i) + M.CoeffReactantB(6, i) * X(pot_j_im1)
+						+ (M.CoeffReactantA(3, j) + M.CoeffReactantB(3, i))*X(pot_j_i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantB()(4, i) * (X(rea_j_i) - X(rea_j_im1))*(X(pot_j_i) - X(pot_j_im1))
+					+ M.CoeffReactantB(4, i) * (X(rea_j_i) - X(rea_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Cren(j, i);
 				//Product
 				F(pro_j_i) =
-					M.GetCoeffProductA()(1, j) * X(pro_jm1_i) + M.GetCoeffProductA()(2, j) * X(pro_jp1_i)
-					+ M.GetCoeffProductB()(1, i) * X(pro_j_im1) + M.GetCoeffProductB()(2, i) * X(pro_j_i)
-					+ (M.GetCoeffProductA()(0, j) + M.GetCoeffProductB()(0, i))*X(pro_j_i)
+					M.CoeffProductA(1, j) * X(pro_jm1_i) + M.CoeffProductA(2, j) * X(pro_jp1_i)
+					+ M.CoeffProductB(1, i) * X(pro_j_im1) + M.CoeffProductB(2, i) * X(pro_j_i)
+					+ (M.CoeffProductA(0, j) + M.CoeffProductB(0, i))*X(pro_j_i)
 
-					+ M.GetCoeffProductA()(4, j)*(X(pro_jp1_i) - X(pro_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffProductA(4, j)*(X(pro_jp1_i) - X(pro_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffProductA()(5, j) * X(pot_jp1_i) + M.GetCoeffProductA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffProductB()(5, i) * X(pot_j_i) + M.GetCoeffProductB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffProductA()(3, j) + M.GetCoeffProductB()(3, i))*X(pot_j_i))*X(pro_j_i)
+					+ (M.CoeffProductA(5, j) * X(pot_jp1_i) + M.CoeffProductA(6, j) * X(pot_jm1_i)
+						+ M.CoeffProductB(5, i) * X(pot_j_i) + M.CoeffProductB(6, i) * X(pot_j_im1)
+						+ (M.CoeffProductA(3, j) + M.CoeffProductB(3, i))*X(pot_j_i))*X(pro_j_i)
 
-					+ M.GetCoeffProductB()(4, i) * (X(pro_j_i) - X(pro_j_im1))*(X(pot_j_i) - X(pot_j_im1))
+					+ M.CoeffProductB(4, i) * (X(pro_j_i) - X(pro_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Cprn(j, i);
 				//Anion
 				F(ani_j_i) =
-					M.GetCoeffAnionA()(1, j) * X(ani_jm1_i) + M.GetCoeffAnionA()(2, j) * X(ani_jp1_i)
-					+ M.GetCoeffAnionB()(1, i) * X(ani_j_im1) + M.GetCoeffAnionB()(2, i) * X(ani_j_i)
-					+ (M.GetCoeffAnionA()(0, j) + M.GetCoeffAnionB()(0, i))*X(ani_j_i)
+					M.CoeffAnionA(1, j) * X(ani_jm1_i) + M.CoeffAnionA(2, j) * X(ani_jp1_i)
+					+ M.CoeffAnionB(1, i) * X(ani_j_im1) + M.CoeffAnionB(2, i) * X(ani_j_i)
+					+ (M.CoeffAnionA(0, j) + M.CoeffAnionB(0, i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionA()(4, j)*(X(ani_jp1_i) - X(ani_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffAnionA(4, j)*(X(ani_jp1_i) - X(ani_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffAnionA()(5, j) * X(pot_jp1_i) + M.GetCoeffAnionA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffAnionB()(5, i) * X(pot_j_i) + M.GetCoeffAnionB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffAnionA()(3, j) + M.GetCoeffAnionB()(3, i))*X(pot_j_i))*X(ani_j_i)
+					+ (M.CoeffAnionA(5, j) * X(pot_jp1_i) + M.CoeffAnionA(6, j) * X(pot_jm1_i)
+						+ M.CoeffAnionB(5, i) * X(pot_j_i) + M.CoeffAnionB(6, i) * X(pot_j_im1)
+						+ (M.CoeffAnionA(3, j) + M.CoeffAnionB(3, i))*X(pot_j_i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionB()(4, i) * (X(ani_j_i) - X(ani_j_im1))*(X(pot_j_i) - X(pot_j_im1))
+					+ M.CoeffAnionB(4, i) * (X(ani_j_i) - X(ani_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Cann(j, i);
 				//Cation
 				F(cat_j_i) =
-					M.GetCoeffCationA()(1, j) * X(cat_jm1_i) + M.GetCoeffCationA()(2, j) * X(cat_jp1_i)
-					+ M.GetCoeffCationB()(1, i) * X(cat_j_im1) + M.GetCoeffCationB()(2, i) * X(cat_j_i)
-					+ (M.GetCoeffCationA()(0, j) + M.GetCoeffCationB()(0, i))*X(cat_j_i)
+					M.CoeffCationA(1, j) * X(cat_jm1_i) + M.CoeffCationA(2, j) * X(cat_jp1_i)
+					+ M.CoeffCationB(1, i) * X(cat_j_im1) + M.CoeffCationB(2, i) * X(cat_j_i)
+					+ (M.CoeffCationA(0, j) + M.CoeffCationB(0, i))*X(cat_j_i)
 
-					+ M.GetCoeffCationA()(4, j)*(X(cat_jp1_i) - X(cat_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+					+ M.CoeffCationA(4, j)*(X(cat_jp1_i) - X(cat_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-					+ (M.GetCoeffCationA()(5, j) * X(pot_jp1_i) + M.GetCoeffCationA()(6, j) * X(pot_jm1_i)
-						+ M.GetCoeffCationB()(5, i) * X(pot_j_i) + M.GetCoeffCationB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffCationA()(3, j) + M.GetCoeffCationB()(3, i))*X(pot_j_i))*X(cat_j_i)
+					+ (M.CoeffCationA(5, j) * X(pot_jp1_i) + M.CoeffCationA(6, j) * X(pot_jm1_i)
+						+ M.CoeffCationB(5, i) * X(pot_j_i) + M.CoeffCationB(6, i) * X(pot_j_im1)
+						+ (M.CoeffCationA(3, j) + M.CoeffCationB(3, i))*X(pot_j_i))*X(cat_j_i)
 
-					+ M.GetCoeffCationB()(4, i) * (X(cat_j_i) - X(cat_j_im1))*(X(pot_j_i) - X(pot_j_im1))
+					+ M.CoeffCationB(4, i) * (X(cat_j_i) - X(cat_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Ccan(j, i);
 				//Potential
 				F(pot_j_i) =
-					M.GetCoeffPotentialA()(1, j) * X(pot_jm1_i) + M.GetCoeffPotentialA()(2, j) * X(pot_jp1_i)
-					+ M.GetCoeffPotentialB()(1, i) * X(pot_j_im1) + M.GetCoeffPotentialB()(2, i) * X(pot_j_i)
-					+ (M.GetCoeffPotentialA()(0, j) + M.GetCoeffPotentialB()(0, i)) * X(pot_j_i)
-					+ (MI.GetReactant().GetZ()*X(rea_j_i) + MI.GetProduct().GetZ()*X(pro_j_i)
-						+ MI.GetSupportAnion().GetZ()*X(ani_j_i) + MI.GetSupportCation().GetZ()*X(cat_j_i)
-						+ MI.GetCxZImmobileCharge())*MI.GetReciprocalEpsilon_rEpsilon_0()*Thermo.GetF();
+					M.CoeffPotentialA(1, j) * X(pot_jm1_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
+					+ M.CoeffPotentialB(1, i) * X(pot_j_im1) + M.CoeffPotentialB(2, i) * X(pot_j_i)
+					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
+					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
+						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
+						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 			}
 			else if (i == 0 && j == 0) {
 				// Reactant:
-				double reactionRate = X(rea_j_i)*Thermo.Getk0()*exp(-Thermo.GetAlfa() * Thermo.GetF_R_T()*(Signal.AppliedPotential() - Thermo.GetE_formal() - X(pot_j_i)))
-					- X(pro_j_i)*Thermo.Getk0()*exp((Thermo.GetAlfa() - 1)*Thermo.GetF_R_T()*(Signal.AppliedPotential() - Thermo.GetE_formal() - X(pot_j_i)));
+				double reactionRate = X(rea_j_i)*Thermo.k0*exp(-Thermo.alfa * Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)))
+					- X(pro_j_i)*Thermo.k0*exp((Thermo.alfa - 1)*Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)));
 
 				F(rea_j_i) =
-					M.GetCoeffReactantA()(1, j) * X(rea_j_i) + M.GetCoeffReactantA()(2, j) * X(rea_jp1_i)
-					+ M.GetCoeffReactantB()(1, i) * X(rea_j_i) + M.GetCoeffReactantB()(2, i) * X(rea_j_ip1)
-					+ (M.GetCoeffReactantA()(0, j) + M.GetCoeffReactantB()(0, i))*X(rea_j_i)
+					M.CoeffReactantA(1, j) * X(rea_j_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
+					+ M.CoeffReactantB(1, i) * X(rea_j_i) + M.CoeffReactantB(2, i) * X(rea_j_ip1)
+					+ (M.CoeffReactantA(0, j) + M.CoeffReactantB(0, i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantA()(4, j)*(X(rea_jp1_i) - X(rea_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffReactantA(4, j)*(X(rea_jp1_i) - X(rea_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffReactantA()(5, j) * X(pot_jp1_i) + M.GetCoeffReactantA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffReactantB()(5, i) * X(pot_j_ip1) + M.GetCoeffReactantB()(6, i) * X(pot_j_i)
-						+ (M.GetCoeffReactantA()(3, j) + M.GetCoeffReactantB()(3, i))*X(pot_j_i))*X(rea_j_i)
+					+ (M.CoeffReactantA(5, j) * X(pot_jp1_i) + M.CoeffReactantA(6, j) * X(pot_j_i)
+						+ M.CoeffReactantB(5, i) * X(pot_j_ip1) + M.CoeffReactantB(6, i) * X(pot_j_i)
+						+ (M.CoeffReactantA(3, j) + M.CoeffReactantB(3, i))*X(pot_j_i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantB()(4, i) * (X(rea_j_ip1) - X(rea_j_i))*(X(pot_j_ip1) - X(pot_j_i))
+					+ M.CoeffReactantB(4, i) * (X(rea_j_ip1) - X(rea_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Cren(j, i)
 					- reactionRate;
 				// Product:
 				F(pro_j_i) =
-					M.GetCoeffProductA()(1, j) * X(pro_j_i) + M.GetCoeffProductA()(2, j) * X(pro_jp1_i)
-					+ M.GetCoeffProductB()(1, i) * X(pro_j_i) + M.GetCoeffProductB()(2, i) * X(pro_j_ip1)
-					+ (M.GetCoeffProductA()(0, j) + M.GetCoeffProductB()(0, i))*X(pro_j_i)
+					M.CoeffProductA(1, j) * X(pro_j_i) + M.CoeffProductA(2, j) * X(pro_jp1_i)
+					+ M.CoeffProductB(1, i) * X(pro_j_i) + M.CoeffProductB(2, i) * X(pro_j_ip1)
+					+ (M.CoeffProductA(0, j) + M.CoeffProductB(0, i))*X(pro_j_i)
 
-					+ M.GetCoeffProductA()(4, j)*(X(pro_jp1_i) - X(pro_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffProductA(4, j)*(X(pro_jp1_i) - X(pro_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffProductA()(5, j) * X(pot_jp1_i) + M.GetCoeffProductA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffProductB()(5, i) * X(pot_j_ip1) + M.GetCoeffProductB()(6, i) * X(pot_j_i)
-						+ (M.GetCoeffProductA()(3, j) + M.GetCoeffProductB()(3, i))*X(pot_j_i))*X(pro_j_i)
+					+ (M.CoeffProductA(5, j) * X(pot_jp1_i) + M.CoeffProductA(6, j) * X(pot_j_i)
+						+ M.CoeffProductB(5, i) * X(pot_j_ip1) + M.CoeffProductB(6, i) * X(pot_j_i)
+						+ (M.CoeffProductA(3, j) + M.CoeffProductB(3, i))*X(pot_j_i))*X(pro_j_i)
 
-					+ M.GetCoeffProductB()(4, i) * (X(pro_j_ip1) - X(pro_j_i))*(X(pot_j_ip1) - X(pot_j_i))
+					+ M.CoeffProductB(4, i) * (X(pro_j_ip1) - X(pro_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Cprn(j, i)
 					+ reactionRate;
 				// Anion
 				F(ani_j_i) =
-					M.GetCoeffAnionA()(1, j) * X(ani_j_i) + M.GetCoeffAnionA()(2, j) * X(ani_jp1_i)
-					+ M.GetCoeffAnionB()(1, i) * X(ani_j_i) + M.GetCoeffAnionB()(2, i) * X(ani_j_ip1)
-					+ (M.GetCoeffAnionA()(0, j) + M.GetCoeffAnionB()(0, i))*X(ani_j_i)
+					M.CoeffAnionA(1, j) * X(ani_j_i) + M.CoeffAnionA(2, j) * X(ani_jp1_i)
+					+ M.CoeffAnionB(1, i) * X(ani_j_i) + M.CoeffAnionB(2, i) * X(ani_j_ip1)
+					+ (M.CoeffAnionA(0, j) + M.CoeffAnionB(0, i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionA()(4, j)*(X(ani_jp1_i) - X(ani_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffAnionA(4, j)*(X(ani_jp1_i) - X(ani_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffAnionA()(5, j) * X(pot_jp1_i) + M.GetCoeffAnionA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffAnionB()(5, i) * X(pot_j_ip1) + M.GetCoeffAnionB()(6, i) * X(pot_j_i)
-						+ (M.GetCoeffAnionA()(3, j) + M.GetCoeffAnionB()(3, i))*X(pot_j_i))*X(ani_j_i)
+					+ (M.CoeffAnionA(5, j) * X(pot_jp1_i) + M.CoeffAnionA(6, j) * X(pot_j_i)
+						+ M.CoeffAnionB(5, i) * X(pot_j_ip1) + M.CoeffAnionB(6, i) * X(pot_j_i)
+						+ (M.CoeffAnionA(3, j) + M.CoeffAnionB(3, i))*X(pot_j_i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionB()(4, i) * (X(ani_j_ip1) - X(ani_j_i))*(X(pot_j_ip1) - X(pot_j_i))
+					+ M.CoeffAnionB(4, i) * (X(ani_j_ip1) - X(ani_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Cann(j, i);
 				// Cation
 				F(cat_j_i) =
 					F(cat_j_i) =
-					M.GetCoeffCationA()(1, j) * X(cat_j_i) + M.GetCoeffCationA()(2, j) * X(cat_jp1_i)
-					+ M.GetCoeffCationB()(1, i) * X(cat_j_i) + M.GetCoeffCationB()(2, i) * X(cat_j_ip1)
-					+ (M.GetCoeffCationA()(0, j) + M.GetCoeffCationB()(0, i))*X(cat_j_i)
+					M.CoeffCationA(1, j) * X(cat_j_i) + M.CoeffCationA(2, j) * X(cat_jp1_i)
+					+ M.CoeffCationB(1, i) * X(cat_j_i) + M.CoeffCationB(2, i) * X(cat_j_ip1)
+					+ (M.CoeffCationA(0, j) + M.CoeffCationB(0, i))*X(cat_j_i)
 
-					+ M.GetCoeffCationA()(4, j)*(X(cat_jp1_i) - X(cat_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffCationA(4, j)*(X(cat_jp1_i) - X(cat_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffCationA()(5, j) * X(pot_jp1_i) + M.GetCoeffCationA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffCationB()(5, i) * X(pot_j_ip1) + M.GetCoeffCationB()(6, i) * X(pot_j_i)
-						+ (M.GetCoeffCationA()(3, j) + M.GetCoeffCationB()(3, i))*X(pot_j_i))*X(cat_j_i)
+					+ (M.CoeffCationA(5, j) * X(pot_jp1_i) + M.CoeffCationA(6, j) * X(pot_j_i)
+						+ M.CoeffCationB(5, i) * X(pot_j_ip1) + M.CoeffCationB(6, i) * X(pot_j_i)
+						+ (M.CoeffCationA(3, j) + M.CoeffCationB(3, i))*X(pot_j_i))*X(cat_j_i)
 
-					+ M.GetCoeffCationB()(4, i) * (X(cat_j_ip1) - X(cat_j_i))*(X(pot_j_ip1) - X(pot_j_i))
+					+ M.CoeffCationB(4, i) * (X(cat_j_ip1) - X(cat_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Ccan(j, i);
 				// Potential
 				F(pot_j_i) =
 					F(pot_j_i) =
-					M.GetCoeffPotentialA()(1, j) * X(pot_j_i) + M.GetCoeffPotentialA()(2, j) * X(pot_jp1_i)
-					+ M.GetCoeffPotentialB()(1, i) * X(pot_j_i) + M.GetCoeffPotentialB()(2, i) * X(pot_j_ip1)
-					+ (M.GetCoeffPotentialA()(0, j) + M.GetCoeffPotentialB()(0, i)) * X(pot_j_i)
-					+ (MI.GetReactant().GetZ()*X(rea_j_i) + MI.GetProduct().GetZ()*X(pro_j_i)
-						+ MI.GetSupportAnion().GetZ()*X(ani_j_i) + MI.GetSupportCation().GetZ()*X(cat_j_i)
-						+ MI.GetCxZImmobileCharge())*MI.GetReciprocalEpsilon_rEpsilon_0()*Thermo.GetF();
+					M.CoeffPotentialA(1, j) * X(pot_j_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
+					+ M.CoeffPotentialB(1, i) * X(pot_j_i) + M.CoeffPotentialB(2, i) * X(pot_j_ip1)
+					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
+					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
+						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
+						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 			}
 			else if (i == membrane.m - 1 && j == 0) {
 				// Reactant:
-				double reactionRate = X(rea_j_i)*Thermo.Getk0()*exp(-Thermo.GetAlfa() * Thermo.GetF_R_T()*(Signal.AppliedPotential() - Thermo.GetE_formal() - X(pot_j_i)))
-					- X(pro_j_i)*Thermo.Getk0()*exp((Thermo.GetAlfa() - 1)*Thermo.GetF_R_T()*(Signal.AppliedPotential() - Thermo.GetE_formal() - X(pot_j_i)));
+				double reactionRate = X(rea_j_i)*Thermo.k0*exp(-Thermo.alfa * Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)))
+					- X(pro_j_i)*Thermo.k0*exp((Thermo.alfa - 1)*Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)));
 				F(rea_j_i) =
-					M.GetCoeffReactantA()(1, j) * X(rea_j_i) + M.GetCoeffReactantA()(2, j) * X(rea_jp1_i)
-					+ M.GetCoeffReactantB()(1, i) * X(rea_j_im1) + M.GetCoeffReactantB()(2, i) * X(rea_j_i)
-					+ (M.GetCoeffReactantA()(0, j) + M.GetCoeffReactantB()(0, i))*X(rea_j_i)
+					M.CoeffReactantA(1, j) * X(rea_j_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
+					+ M.CoeffReactantB(1, i) * X(rea_j_im1) + M.CoeffReactantB(2, i) * X(rea_j_i)
+					+ (M.CoeffReactantA(0, j) + M.CoeffReactantB(0, i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantA()(4, j)*(X(rea_jp1_i) - X(rea_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffReactantA(4, j)*(X(rea_jp1_i) - X(rea_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffReactantA()(5, j) * X(pot_jp1_i) + M.GetCoeffReactantA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffReactantB()(5, i) * X(pot_j_i) + M.GetCoeffReactantB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffReactantA()(3, j) + M.GetCoeffReactantB()(3, i))*X(pot_j_i))*X(rea_j_i)
+					+ (M.CoeffReactantA(5, j) * X(pot_jp1_i) + M.CoeffReactantA(6, j) * X(pot_j_i)
+						+ M.CoeffReactantB(5, i) * X(pot_j_i) + M.CoeffReactantB(6, i) * X(pot_j_im1)
+						+ (M.CoeffReactantA(3, j) + M.CoeffReactantB(3, i))*X(pot_j_i))*X(rea_j_i)
 
-					+ M.GetCoeffReactantB()(4, i) * (X(rea_j_i) - X(rea_j_im1))*(X(pot_j_i) - X(pot_j_im1))
+					+ M.CoeffReactantB(4, i) * (X(rea_j_i) - X(rea_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Cren(j, i)
 					- reactionRate;
 				// Product:
 				F(pro_j_i) =
-					M.GetCoeffProductA()(1, j) * X(pro_j_i) + M.GetCoeffProductA()(2, j) * X(pro_jp1_i)
-					+ M.GetCoeffProductB()(1, i) * X(pro_j_im1) + M.GetCoeffProductB()(2, i) * X(pro_j_i)
-					+ (M.GetCoeffProductA()(0, j) + M.GetCoeffProductB()(0, i))*X(pro_j_i)
+					M.CoeffProductA(1, j) * X(pro_j_i) + M.CoeffProductA(2, j) * X(pro_jp1_i)
+					+ M.CoeffProductB(1, i) * X(pro_j_im1) + M.CoeffProductB(2, i) * X(pro_j_i)
+					+ (M.CoeffProductA(0, j) + M.CoeffProductB(0, i))*X(pro_j_i)
 
-					+ M.GetCoeffProductA()(4, j)*(X(pro_jp1_i) - X(pro_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffProductA(4, j)*(X(pro_jp1_i) - X(pro_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffProductA()(5, j) * X(pot_jp1_i) + M.GetCoeffProductA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffProductB()(5, i) * X(pot_j_i) + M.GetCoeffProductB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffProductA()(3, j) + M.GetCoeffProductB()(3, i))*X(pot_j_i))*X(pro_j_i)
+					+ (M.CoeffProductA(5, j) * X(pot_jp1_i) + M.CoeffProductA(6, j) * X(pot_j_i)
+						+ M.CoeffProductB(5, i) * X(pot_j_i) + M.CoeffProductB(6, i) * X(pot_j_im1)
+						+ (M.CoeffProductA(3, j) + M.CoeffProductB(3, i))*X(pot_j_i))*X(pro_j_i)
 
-					+ M.GetCoeffProductB()(4, i) * (X(pro_j_i) - X(pro_j_im1))*(X(pot_j_i) - X(pot_j_im1))
+					+ M.CoeffProductB(4, i) * (X(pro_j_i) - X(pro_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Cprn(j, i)
 					+ reactionRate;
 				// Anion
 				F(ani_j_i) =
-					M.GetCoeffAnionA()(1, j) * X(ani_j_i) + M.GetCoeffAnionA()(2, j) * X(ani_jp1_i)
-					+ M.GetCoeffAnionB()(1, i) * X(ani_j_im1) + M.GetCoeffAnionB()(2, i) * X(ani_j_i)
-					+ (M.GetCoeffAnionA()(0, j) + M.GetCoeffAnionB()(0, i))*X(ani_j_i)
+					M.CoeffAnionA(1, j) * X(ani_j_i) + M.CoeffAnionA(2, j) * X(ani_jp1_i)
+					+ M.CoeffAnionB(1, i) * X(ani_j_im1) + M.CoeffAnionB(2, i) * X(ani_j_i)
+					+ (M.CoeffAnionA(0, j) + M.CoeffAnionB(0, i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionA()(4, j)*(X(ani_jp1_i) - X(ani_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffAnionA(4, j)*(X(ani_jp1_i) - X(ani_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffAnionA()(5, j) * X(pot_jp1_i) + M.GetCoeffAnionA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffAnionB()(5, i) * X(pot_j_i) + M.GetCoeffAnionB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffAnionA()(3, j) + M.GetCoeffAnionB()(3, i))*X(pot_j_i))*X(ani_j_i)
+					+ (M.CoeffAnionA(5, j) * X(pot_jp1_i) + M.CoeffAnionA(6, j) * X(pot_j_i)
+						+ M.CoeffAnionB(5, i) * X(pot_j_i) + M.CoeffAnionB(6, i) * X(pot_j_im1)
+						+ (M.CoeffAnionA(3, j) + M.CoeffAnionB(3, i))*X(pot_j_i))*X(ani_j_i)
 
-					+ M.GetCoeffAnionB()(4, i) * (X(ani_j_i) - X(ani_j_im1))*(X(pot_j_i) - X(pot_j_im1))
+					+ M.CoeffAnionB(4, i) * (X(ani_j_i) - X(ani_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Cann(j, i);
 				// Cation
 				F(cat_j_i) =
 					F(cat_j_i) =
-					M.GetCoeffCationA()(1, j) * X(cat_j_i) + M.GetCoeffCationA()(2, j) * X(cat_jp1_i)
-					+ M.GetCoeffCationB()(1, i) * X(cat_j_im1) + M.GetCoeffCationB()(2, i) * X(cat_j_i)
-					+ (M.GetCoeffCationA()(0, j) + M.GetCoeffCationB()(0, i))*X(cat_j_i)
+					M.CoeffCationA(1, j) * X(cat_j_i) + M.CoeffCationA(2, j) * X(cat_jp1_i)
+					+ M.CoeffCationB(1, i) * X(cat_j_im1) + M.CoeffCationB(2, i) * X(cat_j_i)
+					+ (M.CoeffCationA(0, j) + M.CoeffCationB(0, i))*X(cat_j_i)
 
-					+ M.GetCoeffCationA()(4, j)*(X(cat_jp1_i) - X(cat_j_i))*(X(pot_jp1_i) - X(pot_j_i))
+					+ M.CoeffCationA(4, j)*(X(cat_jp1_i) - X(cat_j_i))*(X(pot_jp1_i) - X(pot_j_i))
 
-					+ (M.GetCoeffCationA()(5, j) * X(pot_jp1_i) + M.GetCoeffCationA()(6, j) * X(pot_j_i)
-						+ M.GetCoeffCationB()(5, i) * X(pot_j_i) + M.GetCoeffCationB()(6, i) * X(pot_j_im1)
-						+ (M.GetCoeffCationA()(3, j) + M.GetCoeffCationB()(3, i))*X(pot_j_i))*X(cat_j_i)
+					+ (M.CoeffCationA(5, j) * X(pot_jp1_i) + M.CoeffCationA(6, j) * X(pot_j_i)
+						+ M.CoeffCationB(5, i) * X(pot_j_i) + M.CoeffCationB(6, i) * X(pot_j_im1)
+						+ (M.CoeffCationA(3, j) + M.CoeffCationB(3, i))*X(pot_j_i))*X(cat_j_i)
 
-					+ M.GetCoeffCationB()(4, i) * (X(cat_j_i) - X(cat_j_im1))*(X(pot_j_i) - X(pot_j_im1))
+					+ M.CoeffCationB(4, i) * (X(cat_j_i) - X(cat_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Ccan(j, i);
 				// Potential
 				F(pot_j_i) =
 					F(pot_j_i) =
-					M.GetCoeffPotentialA()(1, j) * X(pot_j_i) + M.GetCoeffPotentialA()(2, j) * X(pot_jp1_i)
-					+ M.GetCoeffPotentialB()(1, i) * X(pot_j_im1) + M.GetCoeffPotentialB()(2, i) * X(pot_j_i)
-					+ (M.GetCoeffPotentialA()(0, j) + M.GetCoeffPotentialB()(0, i)) * X(pot_j_i)
-					+ (MI.GetReactant().GetZ()*X(rea_j_i) + MI.GetProduct().GetZ()*X(pro_j_i)
-						+ MI.GetSupportAnion().GetZ()*X(ani_j_i) + MI.GetSupportCation().GetZ()*X(cat_j_i)
-						+ MI.GetCxZImmobileCharge())*MI.GetReciprocalEpsilon_rEpsilon_0()*Thermo.GetF();
+					M.CoeffPotentialA(1, j) * X(pot_j_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
+					+ M.CoeffPotentialB(1, i) * X(pot_j_im1) + M.CoeffPotentialB(2, i) * X(pot_j_i)
+					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
+					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
+						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
+						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 			}
 		}
 	}
@@ -680,73 +680,73 @@ void solver::CalculateF()
 
 			//Reactant
 			F(rea_j_i) =
-				S.GetCoeffReactantA()(1, j) * X(rea_jm1_i) + S.GetCoeffReactantA()(2, j) * X(rea_jp1_i)
-				+ S.GetCoeffReactantB()(1, i) * X(rea_j_im1) + S.GetCoeffReactantB()(2, i) * X(rea_j_ip1)
-				+ (S.GetCoeffReactantA()(0, j) + S.GetCoeffReactantB()(0, i))*X(rea_j_i)
+				S.CoeffReactantA(1, j) * X(rea_jm1_i) + S.CoeffReactantA(2, j) * X(rea_jp1_i)
+				+ S.CoeffReactantB(1, i) * X(rea_j_im1) + S.CoeffReactantB(2, i) * X(rea_j_ip1)
+				+ (S.CoeffReactantA(0, j) + S.CoeffReactantB(0, i))*X(rea_j_i)
 
-				+ S.GetCoeffReactantA()(4, j)*(X(rea_jp1_i) - X(rea_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+				+ S.CoeffReactantA(4, j)*(X(rea_jp1_i) - X(rea_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-				+ (S.GetCoeffReactantA()(5, j) * X(pot_jp1_i) + S.GetCoeffReactantA()(6, j) * X(pot_jm1_i)
-					+ S.GetCoeffReactantB()(5, i) * X(pot_j_ip1) + S.GetCoeffReactantB()(6, i) * X(pot_j_im1)
-					+ (S.GetCoeffReactantA()(3, j) + S.GetCoeffReactantB()(3, i))*X(pot_j_i))*X(rea_j_i)
+				+ (S.CoeffReactantA(5, j) * X(pot_jp1_i) + S.CoeffReactantA(6, j) * X(pot_jm1_i)
+					+ S.CoeffReactantB(5, i) * X(pot_j_ip1) + S.CoeffReactantB(6, i) * X(pot_j_im1)
+					+ (S.CoeffReactantA(3, j) + S.CoeffReactantB(3, i))*X(pot_j_i))*X(rea_j_i)
 
-				+ S.GetCoeffReactantB()(4, i) * (X(rea_j_ip1) - X(rea_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+				+ S.CoeffReactantB(4, i) * (X(rea_j_ip1) - X(rea_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 				+ solution.Cren(j, i);
 			//Product
 			F(pro_j_i) =
-				S.GetCoeffProductA()(1, j) * X(pro_jm1_i) + S.GetCoeffProductA()(2, j) * X(pro_jp1_i)
-				+ S.GetCoeffProductB()(1, i) * X(pro_j_im1) + S.GetCoeffProductB()(2, i) * X(pro_j_ip1)
-				+ (S.GetCoeffProductA()(0, j) + S.GetCoeffProductB()(0, i))*X(pro_j_i)
+				S.CoeffProductA(1, j) * X(pro_jm1_i) + S.CoeffProductA(2, j) * X(pro_jp1_i)
+				+ S.CoeffProductB(1, i) * X(pro_j_im1) + S.CoeffProductB(2, i) * X(pro_j_ip1)
+				+ (S.CoeffProductA(0, j) + S.CoeffProductB(0, i))*X(pro_j_i)
 
-				+ S.GetCoeffProductA()(4, j)*(X(pro_jp1_i) - X(pro_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+				+ S.CoeffProductA(4, j)*(X(pro_jp1_i) - X(pro_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-				+ (S.GetCoeffProductA()(5, j) * X(pot_jp1_i) + S.GetCoeffProductA()(6, j) * X(pot_jm1_i)
-					+ S.GetCoeffProductB()(5, i) * X(pot_j_ip1) + S.GetCoeffProductB()(6, i) * X(pot_j_im1)
-					+ (S.GetCoeffProductA()(3, j) + S.GetCoeffProductB()(3, i))*X(pot_j_i))*X(pro_j_i)
+				+ (S.CoeffProductA(5, j) * X(pot_jp1_i) + S.CoeffProductA(6, j) * X(pot_jm1_i)
+					+ S.CoeffProductB(5, i) * X(pot_j_ip1) + S.CoeffProductB(6, i) * X(pot_j_im1)
+					+ (S.CoeffProductA(3, j) + S.CoeffProductB(3, i))*X(pot_j_i))*X(pro_j_i)
 
-				+ S.GetCoeffProductB()(4, i) * (X(pro_j_ip1) - X(pro_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+				+ S.CoeffProductB(4, i) * (X(pro_j_ip1) - X(pro_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 				+ solution.Cprn(j, i);
 			//Anion
 			F(ani_j_i) =
-				S.GetCoeffAnionA()(1, j) * X(ani_jm1_i) + S.GetCoeffAnionA()(2, j) * X(ani_jp1_i)
-				+ S.GetCoeffAnionB()(1, i) * X(ani_j_im1) + S.GetCoeffAnionB()(2, i) * X(ani_j_ip1)
-				+ (S.GetCoeffAnionA()(0, j) + S.GetCoeffAnionB()(0, i))*X(ani_j_i)
+				S.CoeffAnionA(1, j) * X(ani_jm1_i) + S.CoeffAnionA(2, j) * X(ani_jp1_i)
+				+ S.CoeffAnionB(1, i) * X(ani_j_im1) + S.CoeffAnionB(2, i) * X(ani_j_ip1)
+				+ (S.CoeffAnionA(0, j) + S.CoeffAnionB(0, i))*X(ani_j_i)
 
-				+ S.GetCoeffAnionA()(4, j)*(X(ani_jp1_i) - X(ani_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+				+ S.CoeffAnionA(4, j)*(X(ani_jp1_i) - X(ani_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-				+ (S.GetCoeffAnionA()(5, j) * X(pot_jp1_i) + S.GetCoeffAnionA()(6, j) * X(pot_jm1_i)
-					+ S.GetCoeffAnionB()(5, i) * X(pot_j_ip1) + S.GetCoeffAnionB()(6, i) * X(pot_j_im1)
-					+ (S.GetCoeffAnionA()(3, j) + S.GetCoeffAnionB()(3, i))*X(pot_j_i))*X(ani_j_i)
+				+ (S.CoeffAnionA(5, j) * X(pot_jp1_i) + S.CoeffAnionA(6, j) * X(pot_jm1_i)
+					+ S.CoeffAnionB(5, i) * X(pot_j_ip1) + S.CoeffAnionB(6, i) * X(pot_j_im1)
+					+ (S.CoeffAnionA(3, j) + S.CoeffAnionB(3, i))*X(pot_j_i))*X(ani_j_i)
 
-				+ S.GetCoeffAnionB()(4, i) * (X(ani_j_ip1) - X(ani_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+				+ S.CoeffAnionB(4, i) * (X(ani_j_ip1) - X(ani_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 				+ solution.Cann(j, i);
 			//Cation
 			F(cat_j_i) =
-				S.GetCoeffCationA()(1, j) * X(cat_jm1_i) + S.GetCoeffCationA()(2, j) * X(cat_jp1_i)
-				+ S.GetCoeffCationB()(1, i) * X(cat_j_im1) + S.GetCoeffCationB()(2, i) * X(cat_j_ip1)
-				+ (S.GetCoeffCationA()(0, j) + S.GetCoeffCationB()(0, i))*X(cat_j_i)
+				S.CoeffCationA(1, j) * X(cat_jm1_i) + S.CoeffCationA(2, j) * X(cat_jp1_i)
+				+ S.CoeffCationB(1, i) * X(cat_j_im1) + S.CoeffCationB(2, i) * X(cat_j_ip1)
+				+ (S.CoeffCationA(0, j) + S.CoeffCationB(0, i))*X(cat_j_i)
 
-				+ S.GetCoeffCationA()(4, j)*(X(cat_jp1_i) - X(cat_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
+				+ S.CoeffCationA(4, j)*(X(cat_jp1_i) - X(cat_jm1_i))*(X(pot_jp1_i) - X(pot_jm1_i))
 
-				+ (S.GetCoeffCationA()(5, j) * X(pot_jp1_i) + S.GetCoeffCationA()(6, j) * X(pot_jm1_i)
-					+ S.GetCoeffCationB()(5, i) * X(pot_j_ip1) + S.GetCoeffCationB()(6, i) * X(pot_j_im1)
-					+ (S.GetCoeffCationA()(3, j) + S.GetCoeffCationB()(3, i))*X(pot_j_i))*X(cat_j_i)
+				+ (S.CoeffCationA(5, j) * X(pot_jp1_i) + S.CoeffCationA(6, j) * X(pot_jm1_i)
+					+ S.CoeffCationB(5, i) * X(pot_j_ip1) + S.CoeffCationB(6, i) * X(pot_j_im1)
+					+ (S.CoeffCationA(3, j) + S.CoeffCationB(3, i))*X(pot_j_i))*X(cat_j_i)
 
-				+ S.GetCoeffCationB()(4, i) * (X(cat_j_ip1) - X(cat_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
+				+ S.CoeffCationB(4, i) * (X(cat_j_ip1) - X(cat_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 				+ solution.Ccan(j, i);
 			//Potential
 			F(pot_j_i) =
-				S.GetCoeffPotentialA()(1, j) * X(pot_jm1_i) + S.GetCoeffPotentialA()(2, j) * X(pot_jp1_i)
-				+ S.GetCoeffPotentialB()(1, i) * X(pot_j_im1) + S.GetCoeffPotentialB()(2, i) * X(pot_j_ip1)
-				+ (S.GetCoeffPotentialA()(0, j) + S.GetCoeffPotentialB()(0, i)) * X(pot_j_i)
-				+ (SI.GetReactant().GetZ()*X(rea_j_i) + SI.GetProduct().GetZ()*X(pro_j_i)
-					+ SI.GetSupportAnion().GetZ()*X(ani_j_i) + SI.GetSupportCation().GetZ()*X(cat_j_i)
-					+ SI.GetCxZImmobileCharge())*SI.GetReciprocalEpsilon_rEpsilon_0()*Thermo.F;
+				S.CoeffPotentialA(1, j) * X(pot_jm1_i) + S.CoeffPotentialA(2, j) * X(pot_jp1_i)
+				+ S.CoeffPotentialB(1, i) * X(pot_j_im1) + S.CoeffPotentialB(2, i) * X(pot_j_ip1)
+				+ (S.CoeffPotentialA(0, j) + S.CoeffPotentialB(0, i)) * X(pot_j_i)
+				+ (SI.Reactant.Z*X(rea_j_i) + SI.Product.Z*X(pro_j_i)
+					+ SI.SupportAnion.Z*X(ani_j_i) + SI.SupportCation.Z*X(cat_j_i)
+					+ SI.CxZImmobileCharge)*SI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 		}
 	}
 }
 EquationCoefficient::EquationCoefficient(const IonSystem& fIons, const mesh& phase, const PotentialSignal& fSignal, const nernst_equation& fThermo) :
-	Ions(fIons), Signal(fSignal), F_R_T(fThermo.GetF_R_T()),
+	Ions(fIons), Signal(fSignal), F_R_T(fThermo.F_R_T),
 	CoeffProductA(7, phase.GetMeshSize()[1]), CoeffProductB(7, phase.GetMeshSize()[0]),
 	CoeffReactantA(7, phase.GetMeshSize[1]), CoeffReactantB(7, phase.GetMeshSize()[0]),
 	CoeffAnionA(7, phase.GetMeshSize()[1]), CoeffAnionB(7, phase.GetMeshSize()[0]),
@@ -769,27 +769,27 @@ void EquationCoefficient::CalculateCoeff(Eigen::MatrixXd& GeoCoeffA, Eigen::Matr
 	CoeffPotentialA = GeoCoeffA.topRows(3);
 	CoeffPotentialB = GeoCoeffB.topRows(3);
 	// adjust the coefficients of diffusion components
-	CoeffProductA.topRows(3) *= Ions.GetProduct().GetD*Signal.Getdt();
-	CoeffProductB.topRows(3) *= Ions.GetProduct().GetD*Signal.Getdt();
-	CoeffReactantA.topRows(3) *= Ions.GetReactant().GetD*Signal.Getdt();
-	CoeffReactantB.topRows(3) *= Ions.GetReactant().GetD*Signal.Getdt();
-	CoeffAnionA.topRows(3) *= Ions.GetSupportAnion().GetD*Signal.Getdt();
-	CoeffAnionB.topRows(3) *= Ions.GetSupportAnion().GetD*Signal.Getdt();
-	CoeffCationA.topRows(3) *= Ions.GetSupportCation().GetD*Signal.Getdt();
-	CoeffCationB.topRows(3) *= Ions.GetSupportCation().GetD*Signal.Getdt();
+	CoeffProductA.topRows(3) *= Ions.Product.D*Signal.dt;
+	CoeffProductB.topRows(3) *= Ions.Product.D*Signal.dt;
+	CoeffReactantA.topRows(3) *= Ions.Reactant.D*Signal.dt;
+	CoeffReactantB.topRows(3) *= Ions.Reactant.D*Signal.dt;
+	CoeffAnionA.topRows(3) *= Ions.SupportAnion.D*Signal.dt;
+	CoeffAnionB.topRows(3) *= Ions.SupportAnion.D*Signal.dt;
+	CoeffCationA.topRows(3) *= Ions.SupportCation.D*Signal.dt;
+	CoeffCationB.topRows(3) *= Ions.SupportCation.D*Signal.dt;
 
 	CoeffProductA.row(0).array() += -1;
 	CoeffReactantA.row(0).array() += -1;
 	CoeffAnionA.row(0).array() += -1;
 	CoeffCationA.row(0).array() += -1;
 	// adjust the coefficients of migration components
-	CoeffProductA.bottomRows(4) *= Ions.GetProduct().GetD*Signal.Getdt()*Ions.GetProduct().GetZ*F_R_T;
-	CoeffProductB.bottomRows(4) *= Ions.GetProduct().GetD*Signal.Getdt()*Ions.GetProduct().GetZ*F_R_T;
-	CoeffReactantA.bottomRows(4) *= Ions.GetReactant().GetD*Signal.Getdt()*Ions.GetReactant().GetZ*F_R_T;
-	CoeffReactantB.bottomRows(4) *= Ions.GetReactant().GetD*Signal.Getdt()*Ions.GetReactant().GetZ*F_R_T;
-	CoeffAnionA.bottomRows(4) *= Ions.GetSupportAnion().GetD*Signal.Getdt()*Ions.GetSupportAnion().GetZ*F_R_T;
-	CoeffAnionB.bottomRows(4) *= Ions.GetSupportAnion().GetD*Signal.Getdt()*Ions.GetSupportAnion().GetZ*F_R_T;
-	CoeffCationA.bottomRows(4) *= Ions.GetSupportCation().GetD*Signal.Getdt()*Ions.GetSupportCation().GetZ*F_R_T;
-	CoeffCationB.bottomRows(4) *= Ions.GetSupportCation().GetD*Signal.Getdt()*Ions.GetSupportCation().GetZ*F_R_T;
+	CoeffProductA.bottomRows(4) *= Ions.Product.D*Signal.dt*Ions.Product.Z*F_R_T;
+	CoeffProductB.bottomRows(4) *= Ions.Product.D*Signal.dt*Ions.Product.Z*F_R_T;
+	CoeffReactantA.bottomRows(4) *= Ions.Reactant.D*Signal.dt*Ions.Reactant.Z*F_R_T;
+	CoeffReactantB.bottomRows(4) *= Ions.Reactant.D*Signal.dt*Ions.Reactant.Z*F_R_T;
+	CoeffAnionA.bottomRows(4) *= Ions.SupportAnion.D*Signal.dt*Ions.SupportAnion.Z*F_R_T;
+	CoeffAnionB.bottomRows(4) *= Ions.SupportAnion.D*Signal.dt*Ions.SupportAnion.Z*F_R_T;
+	CoeffCationA.bottomRows(4) *= Ions.SupportCation.D*Signal.dt*Ions.SupportCation.Z*F_R_T;
+	CoeffCationB.bottomRows(4) *= Ions.SupportCation.D*Signal.dt*Ions.SupportCation.Z*F_R_T;
 }
 
