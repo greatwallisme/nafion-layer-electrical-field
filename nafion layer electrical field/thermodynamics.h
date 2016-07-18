@@ -2,13 +2,13 @@
 #define THERMODYNAMICS_H_INCLUDED
 
 class nernst_equation{
+	friend class ElectrodeReaction;
 public:
 	nernst_equation(double fE_formal, int fn, double k0, double alfa);
 	~nernst_equation(){};
 	
 	const double F; // Faraday constant, C mol^-1
 	const double alfa; // reduction charge transfer coefficient
-	const double k0; // standard rate constant
 	const int n; // the number of electron transfered
 	const double E_formal; // standard potential, V
 	const double F_R_T; // F/(RT)
@@ -27,6 +27,29 @@ private:
 	const double T; // temperature, K
 	double phi;
 	double ReciprocalThermConst;
+	const double minusAlfaNF_R_T; // -alfa*nF/(RT)
+	const double AlfaMinusOneNF_R_T; // (1-alfa)*nF/(RT)
+	const double k0; // standard rate constant
 };
 
 #endif
+
+class ElectrodeReaction
+{
+public:
+	ElectrodeReaction(double fEpsilon_d, double fEpsilon_oc, double fEpsilon_ic, double fmu_i, double fmu, nernst_equation& fInnerThermo);
+	double DrivingPotential(double gradPhi_OHP) { return DrivingPotentialCoeff*gradPhi_OHP - InnerThermo.E_formal; }
+	double kf(double drivingPotnetial) { return InnerThermo.k0*exp(InnerThermo.minusAlfaNF_R_T*drivingPotnetial); }; // forward reaction rate
+	double kb(double drivingPotential) { return InnerThermo.k0*exp(InnerThermo.AlfaMinusOneNF_R_T*drivingPotential); }; // backward reaction rate
+
+private:
+	double Epsilon_d; // the effective dielectric constants of the diffuse double-layer
+	double Epsilon_oc; // the effective dielectric constants of the outer part of electric double-layer
+	double Epsilon_ic; // the effective dielectric onstants of the inner part of electric double layer
+	double mu_i; // the thickness of the inner part of the electric double-layer
+	double mu; // the thickness of the electric double-layer
+
+	double DrivingPotentialCoeff; // Electrode potential minus Phi_OHP
+
+	nernst_equation& InnerThermo;
+};
