@@ -13,11 +13,9 @@ public:
 	const double E_formal; // standard potential, V
 	const double F_R_T; // F/(RT)
 	const double nF_R_T; // nF/(RT)
-
-	// calculate the Red concentration under thermodynamic equilibarium
-	// E: the potential subjected to the reaction
-	// C_total: the total concentration of the redox pair
-	double ratio_ox2red(double E); 
+	double ratio_ox2red(double E); 	// calculate the Red concentration under thermodynamic equilibarium
+									// E: the potential subjected to the reaction
+									// C_total: the total concentration of the redox pair
 	double DrivingPotential(double K); // return the driving potential of the reaction
 									   // K: Cox/Cred
 
@@ -38,18 +36,18 @@ class ElectrodeReaction
 {
 public:
 	ElectrodeReaction(double fEpsilon_d, double fEpsilon_oc, double fEpsilon_ic, double fmu_i, double fmu, nernst_equation& fInnerThermo);
-	double DrivingPotential(double gradPhi_OHP) { return DrivingPotentialCoeff*gradPhi_OHP - InnerThermo.E_formal; }
-	double kf(double drivingPotnetial) { return InnerThermo.k0*exp(InnerThermo.minusAlfaNF_R_T*drivingPotnetial); }; // forward reaction rate
-	double kb(double drivingPotential) { return InnerThermo.k0*exp(InnerThermo.AlfaMinusOneNF_R_T*drivingPotential); }; // backward reaction rate
+	double DrivingPotential(double gradPhi_OHP) const { return DrivingPotentialCoeff*gradPhi_OHP - InnerThermo.E_formal; }
+	double kf(double drivingPotnetial) const { return InnerThermo.k0*exp(InnerThermo.minusAlfaNF_R_T*drivingPotnetial); }; // forward reaction rate
+	double kb(double drivingPotential) const { return InnerThermo.k0*exp(InnerThermo.AlfaMinusOneNF_R_T*drivingPotential); }; // backward reaction rate
 
 private:
-	double Epsilon_d; // the effective dielectric constants of the diffuse double-layer
-	double Epsilon_oc; // the effective dielectric constants of the outer part of electric double-layer
-	double Epsilon_ic; // the effective dielectric onstants of the inner part of electric double layer
-	double mu_i; // the thickness of the inner part of the electric double-layer
-	double mu; // the thickness of the electric double-layer
+	const double Epsilon_d; // the effective dielectric constants of the diffuse double-layer
+	const double Epsilon_oc; // the effective dielectric constants of the outer part of electric double-layer
+	const double Epsilon_ic; // the effective dielectric onstants of the inner part of electric double layer
+	const double mu_i; // the thickness of the inner part of the electric double-layer
+	const double mu; // the thickness of the electric double-layer
 
-	double DrivingPotentialCoeff; // Electrode potential minus Phi_OHP
+	const double DrivingPotentialCoeff; // Electrode potential minus Phi_OHP
 
 	nernst_equation& InnerThermo;
 };

@@ -12,7 +12,11 @@ typedef Eigen::Triplet<double> Td;
 class solver
 {
 public:
-	solver(mesh& fmembrane, mesh& fsolution, const IonSystem& fmembraneIons, const IonSystem& fsolutionIons, PotentialSignal& fSignal, const nernst_equation& fThermo);
+	solver(mesh& fmembrane, mesh& fsolution,
+		   const IonSystem& fmembraneIons, const IonSystem& fsolutionIons, 
+		   PotentialSignal& fSignal, 
+		   const nernst_equation& fThermo,
+		   const ElectrodeReaction& ElecR);
 	void initialise();
 	
 private:
@@ -34,6 +38,7 @@ private:
 	mesh& solution;
 	PotentialSignal& Signal;
 	const nernst_equation& Thermo;
+	const ElectrodeReaction& ElecR;
 	const IonSystem& membraneIons;
 	const IonSystem& solutionIons;
 	const unsigned long MatrixLen;

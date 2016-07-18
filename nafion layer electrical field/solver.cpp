@@ -3,8 +3,8 @@
 
 typedef Eigen::Triplet<double> Tt;
 
-solver::solver(mesh& fmembrane, mesh& fsolution, const IonSystem& fmembraneIons, const IonSystem& fsolutionIons, PotentialSignal& fSignal, const nernst_equation& fThermo) :
-	membrane(fmembrane), solution(fsolution), membraneIons(fmembraneIons), solutionIons(fsolutionIons), Signal(fSignal), Thermo(fThermo),
+solver::solver(mesh& fmembrane, mesh& fsolution, const IonSystem& fmembraneIons, const IonSystem& fsolutionIons, PotentialSignal& fSignal, const nernst_equation& fThermo, const ElectrodeReaction& fElecR) :
+	membrane(fmembrane), solution(fsolution), membraneIons(fmembraneIons), solutionIons(fsolutionIons), Signal(fSignal), Thermo(fThermo), ElecR(fElecR),
 	MatrixLen((fmembrane.m*fmembrane.n + fsolution.m*fsolution.n)*5),
 	MatrixA(MatrixLen, MatrixLen),
 	arrayb(MatrixLen),
@@ -289,8 +289,11 @@ void solver::CalculateF()
 			}
 			else if (j == 0 && i > 1 && i < membrane.m - 1) {
 				// Reactant:
-				double reactionRate = X(rea_j_i)*Thermo.k0*exp(-Thermo.alfa * Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)))
-					- X(pro_j_i)*Thermo.k0*exp((Thermo.alfa - 1)*Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)));
+				double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+				double kf = ElecR.kf(DrivingPotential);
+				double kb = ElecR.kb(DrivingPotential);
+				double reactionRate = kf*X(pro_j_i) - kb*X(rea_j_i); // production is O, reatant is R
+
 				F(rea_j_i) =
 					M.CoeffReactantA(1, j) * X(rea_j_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
 					+ M.CoeffReactantB(1, i) * X(rea_j_im1) + M.CoeffReactantB(2, i) * X(rea_j_ip1)
@@ -304,7 +307,7 @@ void solver::CalculateF()
 
 					+ M.CoeffReactantB(4, i) * (X(rea_j_ip1) - X(rea_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Cren(j, i)
-					- reactionRate;
+					+ reactionRate/membrane.dz;
 				// Product:
 				F(pro_j_i) =
 					M.CoeffProductA(1, j) * X(pro_j_i) + M.CoeffProductA(2, j) * X(pro_jp1_i)
@@ -319,7 +322,7 @@ void solver::CalculateF()
 
 					+ M.CoeffProductB(4, i) * (X(pro_j_ip1) - X(pro_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Cprn(j, i)
-					+ reactionRate;
+					- reactionRate/membrane.dz;
 				// Anion
 				F(ani_j_i) =
 					M.CoeffAnionA(1, j) * X(ani_j_i) + M.CoeffAnionA(2, j) * X(ani_jp1_i)
@@ -350,14 +353,7 @@ void solver::CalculateF()
 					+ M.CoeffCationB(4, i) * (X(cat_j_ip1) - X(cat_j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 					+ membrane.Ccan(j, i);
 				// Potential
-				F(pot_j_i) =
-					F(pot_j_i) =
-					M.CoeffPotentialA(1, j) * X(pot_j_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
-					+ M.CoeffPotentialB(1, i) * X(pot_j_im1) + M.CoeffPotentialB(2, i) * X(pot_j_ip1)
-					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
-					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
-						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
-						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+				F(pot_j_i) = Signal.AppliedPotential - X(pot_j_i) - Thermo.E_formal - DrivingPotential;
 			}
 			else if (i == 0 && j > 0 && j < membrane.n - 1) {
 				//Reactant
@@ -496,8 +492,10 @@ void solver::CalculateF()
 			}
 			else if (i == 0 && j == 0) {
 				// Reactant:
-				double reactionRate = X(rea_j_i)*Thermo.k0*exp(-Thermo.alfa * Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)))
-					- X(pro_j_i)*Thermo.k0*exp((Thermo.alfa - 1)*Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)));
+				double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+				double kf = ElecR.kf(DrivingPotential);
+				double kb = ElecR.kb(DrivingPotential);
+				double reactionRate = kf*X(pro_j_i) - kb*X(rea_j_i); // production is O, reatant is R
 
 				F(rea_j_i) =
 					M.CoeffReactantA(1, j) * X(rea_j_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
@@ -512,7 +510,7 @@ void solver::CalculateF()
 
 					+ M.CoeffReactantB(4, i) * (X(rea_j_ip1) - X(rea_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Cren(j, i)
-					- reactionRate;
+					+ reactionRate;
 				// Product:
 				F(pro_j_i) =
 					M.CoeffProductA(1, j) * X(pro_j_i) + M.CoeffProductA(2, j) * X(pro_jp1_i)
@@ -527,7 +525,7 @@ void solver::CalculateF()
 
 					+ M.CoeffProductB(4, i) * (X(pro_j_ip1) - X(pro_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Cprn(j, i)
-					+ reactionRate;
+					- reactionRate;
 				// Anion
 				F(ani_j_i) =
 					M.CoeffAnionA(1, j) * X(ani_j_i) + M.CoeffAnionA(2, j) * X(ani_jp1_i)
@@ -558,19 +556,15 @@ void solver::CalculateF()
 					+ M.CoeffCationB(4, i) * (X(cat_j_ip1) - X(cat_j_i))*(X(pot_j_ip1) - X(pot_j_i))
 					+ membrane.Ccan(j, i);
 				// Potential
-				F(pot_j_i) =
-					F(pot_j_i) =
-					M.CoeffPotentialA(1, j) * X(pot_j_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
-					+ M.CoeffPotentialB(1, i) * X(pot_j_i) + M.CoeffPotentialB(2, i) * X(pot_j_ip1)
-					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
-					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
-						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
-						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+				F(pot_j_i) = Signal.AppliedPotential - X(pot_j_i) - Thermo.E_formal - DrivingPotential;
 			}
 			else if (i == membrane.m - 1 && j == 0) {
 				// Reactant:
-				double reactionRate = X(rea_j_i)*Thermo.k0*exp(-Thermo.alfa * Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)))
-					- X(pro_j_i)*Thermo.k0*exp((Thermo.alfa - 1)*Thermo.F_R_T*(Signal.AppliedPotential() - Thermo.E_formal - X(pot_j_i)));
+				double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+				double kf = ElecR.kf(DrivingPotential);
+				double kb = ElecR.kb(DrivingPotential);
+				double reactionRate = kf*X(pro_j_i) - kb*X(rea_j_i); // production is O, reatant is R
+
 				F(rea_j_i) =
 					M.CoeffReactantA(1, j) * X(rea_j_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
 					+ M.CoeffReactantB(1, i) * X(rea_j_im1) + M.CoeffReactantB(2, i) * X(rea_j_i)
@@ -584,7 +578,7 @@ void solver::CalculateF()
 
 					+ M.CoeffReactantB(4, i) * (X(rea_j_i) - X(rea_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Cren(j, i)
-					- reactionRate;
+					+ reactionRate;
 				// Product:
 				F(pro_j_i) =
 					M.CoeffProductA(1, j) * X(pro_j_i) + M.CoeffProductA(2, j) * X(pro_jp1_i)
@@ -599,7 +593,7 @@ void solver::CalculateF()
 
 					+ M.CoeffProductB(4, i) * (X(pro_j_i) - X(pro_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Cprn(j, i)
-					+ reactionRate;
+					- reactionRate;
 				// Anion
 				F(ani_j_i) =
 					M.CoeffAnionA(1, j) * X(ani_j_i) + M.CoeffAnionA(2, j) * X(ani_jp1_i)
@@ -630,14 +624,7 @@ void solver::CalculateF()
 					+ M.CoeffCationB(4, i) * (X(cat_j_i) - X(cat_j_im1))*(X(pot_j_i) - X(pot_j_im1))
 					+ membrane.Ccan(j, i);
 				// Potential
-				F(pot_j_i) =
-					F(pot_j_i) =
-					M.CoeffPotentialA(1, j) * X(pot_j_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
-					+ M.CoeffPotentialB(1, i) * X(pot_j_im1) + M.CoeffPotentialB(2, i) * X(pot_j_i)
-					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
-					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
-						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
-						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+				F(pot_j_i) = Signal.AppliedPotential - X(pot_j_i) - Thermo.E_formal - DrivingPotential;
 			}
 		}
 	}
