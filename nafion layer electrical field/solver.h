@@ -36,8 +36,11 @@ private:
 	void BulkMTEquation(unsigned long i, unsigned long j,
 					  unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
 					  unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-					  Eigen::MatrixXd& CA, Eigen::MatrixXd& CB, Eigen::MatrixXd& Cn);
-	void BulkPotEquation();
+					  const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn);
+	void BulkPotEquation(unsigned long i, unsigned long j, 
+						unsigned long rea_j_i, unsigned long pro_j_i, unsigned long ani_j_i, unsigned long cat_j_i,
+						unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
+						const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I);
 
 	mesh& membrane;
 	mesh& solution;

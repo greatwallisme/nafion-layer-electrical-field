@@ -235,13 +235,8 @@ void solver::CalculateF()
 				BulkMTEquation(i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_ip1, cat_j_im1,
 					pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1, M.CoeffCationA, M.CoeffCationB, membrane.Ccan);
 				//Potential
-				F(pot_j_i) =
-					M.CoeffPotentialA(1, j) * X(pot_jm1_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
-					+ M.CoeffPotentialB(1, i) * X(pot_j_im1) + M.CoeffPotentialB(2, i) * X(pot_j_ip1)
-					+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
-					+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
-						+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
-						+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+				BulkPotEquation(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1, M.CoeffPotentialA, M.CoeffPotentialB, MI);
+
 			}
 			else if (j == 0 && i > 1 && i < membrane.m - 1) {
 				// Reactant:
@@ -634,23 +629,17 @@ void solver::CalculateF()
 			BulkMTEquation(i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_ip1, cat_j_im1,
 				pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1, S.CoeffCationA, S.CoeffCationB, solution.Ccan);
 			//Potential
-			F(pot_j_i) =
-				S.CoeffPotentialA(1, j) * X(pot_jm1_i) + S.CoeffPotentialA(2, j) * X(pot_jp1_i)
-				+ S.CoeffPotentialB(1, i) * X(pot_j_im1) + S.CoeffPotentialB(2, i) * X(pot_j_ip1)
-				+ (S.CoeffPotentialA(0, j) + S.CoeffPotentialB(0, i)) * X(pot_j_i)
-				+ (SI.Reactant.Z*X(rea_j_i) + SI.Product.Z*X(pro_j_i)
-					+ SI.SupportAnion.Z*X(ani_j_i) + SI.SupportCation.Z*X(cat_j_i)
-					+ SI.CxZImmobileCharge)*SI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+			BulkPotEquation(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1, S.CoeffPotentialA, S.CoeffPotentialB, SI);
 		}
 	}
 }
 
 inline void solver::BulkMTEquation(unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
 	unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-	Eigen::MatrixXd& CA, Eigen::MatrixXd& CB, Eigen::MatrixXd& Cn)
+	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn)
 {
 	/*
-	Sample Equation:
+	Example Equation:
 	F(rea_j_i) =
 		M.CoeffReactantA(1, j) * X(rea_jm1_i) + M.CoeffReactantA(2, j) * X(rea_jp1_i)
 		+ M.CoeffReactantB(1, i) * X(rea_j_im1) + M.CoeffReactantB(2, i) * X(rea_j_ip1)
@@ -680,6 +669,32 @@ inline void solver::BulkMTEquation(unsigned long i, unsigned long j, unsigned lo
 		+ CB(4, i)*(X(j_ip1) - X(j_im1))*(X(pot_j_ip1) - X(pot_j_im1))
 		+ Cn(j, i);
 }
+
+inline void solver::BulkPotEquation(unsigned long i, unsigned long j, unsigned long rea_j_i, unsigned long pro_j_i, unsigned long ani_j_i, unsigned long cat_j_i,
+	unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
+	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I)
+{
+	/*
+	Example Equation:
+	F(pot_j_i) =
+		M.CoeffPotentialA(1, j) * X(pot_jm1_i) + M.CoeffPotentialA(2, j) * X(pot_jp1_i)
+		+ M.CoeffPotentialB(1, i) * X(pot_j_im1) + M.CoeffPotentialB(2, i) * X(pot_j_ip1)
+		+ (M.CoeffPotentialA(0, j) + M.CoeffPotentialB(0, i)) * X(pot_j_i)
+		+ (MI.Reactant.Z*X(rea_j_i) + MI.Product.Z*X(pro_j_i)
+			+ MI.SupportAnion.Z*X(ani_j_i) + MI.SupportCation.Z*X(cat_j_i)
+			+ MI.CxZImmobileCharge)*MI.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	*/
+
+	F(pot_j_i) =
+		CA(1, j)*X(pot_jm1_i) + CA(2, j)*X(pot_jp1_i)
+		+ CB(1, i)*X(pot_j_im1) + CB(2, i)*X(pot_j_ip1)
+		+ (CA(0, j) + CB(0, i))*X(pot_j_i)
+		+ (I.Reactant.Z*X(rea_j_i) + I.Product.Z*X(pro_j_i) 
+		+ I.SupportAnion.Z*X(ani_j_i) + I.SupportCation.Z*X(cat_j_i) 
+		+ I.CxZImmobileCharge)*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+
+}
+
 EquationCoefficient::EquationCoefficient(const IonSystem& fIons, const mesh& phase, const PotentialSignal& fSignal, const nernst_equation& fThermo) :
 	Ions(fIons), Signal(fSignal), F_R_T(fThermo.F_R_T),
 	CoeffProductA(7, phase.GetMeshSize()[1]), CoeffProductB(7, phase.GetMeshSize()[0]),
