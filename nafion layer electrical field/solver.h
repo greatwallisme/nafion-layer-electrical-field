@@ -33,6 +33,11 @@ private:
 	void GeoCoefficientA(mesh& phase, Eigen::MatrixXd& GeoCoeffA) const;
 	void GeoCoefficientB(mesh& phase, Eigen::MatrixXd& GeoCoeffB) const;
 	void initialiseX();
+	void BulkMTEquation(unsigned long i, unsigned long j,
+					  unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
+					  unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
+					  Eigen::MatrixXd& CA, Eigen::MatrixXd& CB, Eigen::MatrixXd& Cn);
+	void BulkPotEquation();
 
 	mesh& membrane;
 	mesh& solution;

@@ -3,6 +3,7 @@
 
 class nernst_equation{
 	friend class ElectrodeReaction;
+	friend class InterfaceReaction;
 public:
 	nernst_equation(double fE_formal, int fn, double k0, double alfa);
 	~nernst_equation(){};
@@ -49,5 +50,17 @@ private:
 
 	const double DrivingPotentialCoeff; // Electrode potential minus Phi_OHP
 
-	nernst_equation& InnerThermo;
+	const nernst_equation& InnerThermo;
+};
+
+class InterfaceReaction
+{
+
+public:
+	InterfaceReaction(nernst_equation& fInnerThermo);
+	double kf(double dE); // dE is the potential difference between the membrane and the solution phase
+	double kb(double dE);
+private:
+
+	nernst_equation& InnerThermo
 };
