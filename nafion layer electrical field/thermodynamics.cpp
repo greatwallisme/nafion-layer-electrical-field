@@ -25,3 +25,9 @@ ElectrodeReaction::ElectrodeReaction(double fEpsilon_d, double fEpsilon_oc, doub
 	DrivingPotentialCoeff(-(Epsilon_d / Epsilon_oc*(mu - mu_i) + Epsilon_d / Epsilon_ic*mu))
 {
 }
+
+InterfaceReaction::InterfaceReaction(nernst_equation& fInnerThermo) :
+	InnerThermo(fInnerThermo)
+{
+
+}
