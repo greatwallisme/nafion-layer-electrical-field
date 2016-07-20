@@ -9,55 +9,6 @@ typedef Eigen::SparseMatrix<double> SpMatrixXd;
 typedef Eigen::SparseVector<double> SpVectorXd;
 typedef Eigen::Triplet<double> Td;
 
-class solver
-{
-public:
-	solver(mesh& fmembrane, mesh& fsolution,
-		   const IonSystem& fmembraneIons, const IonSystem& fsolutionIons, 
-		   PotentialSignal& fSignal, 
-		   const nernst_equation& fThermo,
-		   const ElectrodeReaction& fElecR,
-		   const InterfaceReaction& fCationTransR,
-		   const InterfaceReaction& fProductTransR,
-		   const InterfaceReaction& fReactantTransR);
-	void initialise();
-	
-private:
-	SpMatrixXd MatrixA; // Ax = b for Fc, each element inside is initialised as 0
-	Eigen::VectorXd arrayb; // Ax = b for Fc; each element inside is initialised as 0
-	Eigen::VectorXd dX; // the change of x in an iteration
-	Eigen::VectorXd X; // the calculated results;
-	Eigen::VectorXd F; // values of Newton-Raphson functions
-
-	EquationCoefficient MemEquationCoefficient; // first three elements: diffusion, last four elements: migration
-	EquationCoefficient SolEquationCoefficient; // first three elements: diffusion, last four elements: migration
-
-	void CalculateF();
-	void GeoCoefficientA(mesh& phase, Eigen::MatrixXd& GeoCoeffA) const;
-	void GeoCoefficientB(mesh& phase, Eigen::MatrixXd& GeoCoeffB) const;
-	void initialiseX();
-	double BulkMTEquation(unsigned long i, unsigned long j, 
-						double Xj_i, double Xjp1_i, double Xjm1_i, double Xj_ip1, double Xj_im1,
-						double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
-						const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn);
-	double BulkPotEquation(unsigned long i, unsigned long j, 
-							double Xrea_j_i, double Xpro_j_i, double Xani_j_i, double Xcat_j_i,
-							double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
-							const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I);
-
-	mesh& membrane;
-	mesh& solution;
-	PotentialSignal& Signal;
-	const nernst_equation& Thermo;
-	const ElectrodeReaction& ElecR;
-	const IonSystem& membraneIons;
-	const IonSystem& solutionIons;
-	const unsigned long MatrixLen;
-	const InterfaceReaction& CationTransR;
-	const InterfaceReaction& ProductTransR;
-	const InterfaceReaction& ReactantTransR;
-};
-
 class EquationCoefficient
 {
 	friend class solver;
@@ -81,4 +32,53 @@ private:
 	const IonSystem& Ions;
 	const PotentialSignal& Signal;
 	const double F_R_T;
+};
+
+class solver
+{
+public:
+	solver(mesh& fmembrane, mesh& fsolution,
+		const IonSystem& fmembraneIons, const IonSystem& fsolutionIons,
+		PotentialSignal& fSignal,
+		const nernst_equation& fThermo,
+		const ElectrodeReaction& fElecR,
+		const InterfaceReaction& fCationTransR,
+		const InterfaceReaction& fProductTransR,
+		const InterfaceReaction& fReactantTransR);
+	void initialise();
+
+private:
+	SpMatrixXd MatrixA; // Ax = b for Fc, each element inside is initialised as 0
+	Eigen::VectorXd arrayb; // Ax = b for Fc; each element inside is initialised as 0
+	Eigen::VectorXd dX; // the change of x in an iteration
+	Eigen::VectorXd X; // the calculated results;
+	Eigen::VectorXd F; // values of Newton-Raphson functions
+
+	EquationCoefficient MemEquationCoefficient; // first three elements: diffusion, last four elements: migration
+	EquationCoefficient SolEquationCoefficient; // first three elements: diffusion, last four elements: migration
+
+	void CalculateF();
+	void GeoCoefficientA(mesh& phase, Eigen::MatrixXd& GeoCoeffA) const;
+	void GeoCoefficientB(mesh& phase, Eigen::MatrixXd& GeoCoeffB) const;
+	void initialiseX();
+	double BulkMTEquation(unsigned long i, unsigned long j,
+		double Xj_i, double Xjp1_i, double Xjm1_i, double Xj_ip1, double Xj_im1,
+		double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn);
+	double BulkPotEquation(unsigned long i, unsigned long j,
+		double Xrea_j_i, double Xpro_j_i, double Xani_j_i, double Xcat_j_i,
+		double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I);
+
+	mesh& membrane;
+	mesh& solution;
+	PotentialSignal& Signal;
+	const nernst_equation& Thermo;
+	const ElectrodeReaction& ElecR;
+	const IonSystem& membraneIons;
+	const IonSystem& solutionIons;
+	const unsigned long MatrixLen;
+	const InterfaceReaction& CationTransR;
+	const InterfaceReaction& ProductTransR;
+	const InterfaceReaction& ReactantTransR;
 };

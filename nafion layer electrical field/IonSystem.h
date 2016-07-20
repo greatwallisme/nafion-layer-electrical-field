@@ -3,6 +3,14 @@
 typedef Eigen::SparseVector<double> SpVectorXd;
 typedef Eigen::SparseMatrix<double> SpMatrixXd;
 
+class Ion
+{
+public:
+	Ion(double fD, int fZ);
+	const double D;
+	const int Z;
+};
+
 class IonSystem
 {
 public:
@@ -23,10 +31,3 @@ private:
 	const double Epsilon_0;
 };
 
-class Ion
-{
-public:
-	Ion(double fD, int fZ);
-	const double D;
-	const int Z;
-};

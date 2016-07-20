@@ -1,5 +1,6 @@
 #ifndef THERMODYNAMICS_H_INCLUDED
 #define THERMODYNAMICS_H_INCLUDED
+#include <cmath>
 
 class nernst_equation{
 	friend class ElectrodeReaction;

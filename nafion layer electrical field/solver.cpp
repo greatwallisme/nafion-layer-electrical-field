@@ -79,7 +79,7 @@ void solver::GeoCoefficientA(mesh& phase, Eigen::MatrixXd& GeoCoeffA) const
 
 void solver::GeoCoefficientB(mesh& phase, Eigen::MatrixXd& GeoCoeffB) const
 {
-	double dR1, double dR2, R;
+	double dR1, dR2, R;
 	for (unsigned long i = 0; i < phase.m; ++i) {
 		R = phase.RR(0, i);
 		if (i == 0) {
@@ -264,7 +264,7 @@ void solver::CalculateF()
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_im1),
 					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membrane.Ccan);
 				// Potential
-				F(pot_j_i) = Signal.AppliedPotential - X(pot_j_i) - Thermo.E_formal - DrivingPotential;
+				F(pot_j_i) = Signal.AppliedPotential() - X(pot_j_i) - Thermo.E_formal - DrivingPotential;
 			}
 			else if (i == 0 && j > 0 && j < membrane.n - 1) {
 				//Reactant
@@ -367,7 +367,7 @@ void solver::CalculateF()
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_im1),
 					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membrane.Ccan);
 				// Potential
-				F(pot_j_i) = Signal.AppliedPotential - X(pot_j_i) - Thermo.E_formal - DrivingPotential;
+				F(pot_j_i) = Signal.AppliedPotential() - X(pot_j_i) - Thermo.E_formal - DrivingPotential;
 			}
 			else if (i == membrane.m - 1 && j == 0) {
 				// Reactant:
@@ -390,7 +390,7 @@ void solver::CalculateF()
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_i), X(cat_j_im1),
 					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_i), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membrane.Ccan);
 				// Potential
-				F(pot_j_i) = Signal.AppliedPotential - X(pot_j_i) - Thermo.E_formal - DrivingPotential;
+				F(pot_j_i) = Signal.AppliedPotential() - X(pot_j_i) - Thermo.E_formal - DrivingPotential;
 			}
 		}
 	}
@@ -513,10 +513,10 @@ inline double solver::BulkPotEquation(unsigned long i, unsigned long j, double X
 EquationCoefficient::EquationCoefficient(const IonSystem& fIons, const mesh& phase, const PotentialSignal& fSignal, const nernst_equation& fThermo) :
 	Ions(fIons), Signal(fSignal), F_R_T(fThermo.F_R_T),
 	CoeffProductA(7, phase.GetMeshSize()[1]), CoeffProductB(7, phase.GetMeshSize()[0]),
-	CoeffReactantA(7, phase.GetMeshSize[1]), CoeffReactantB(7, phase.GetMeshSize()[0]),
+	CoeffReactantA(7, phase.GetMeshSize()[1]), CoeffReactantB(7, phase.GetMeshSize()[0]),
 	CoeffAnionA(7, phase.GetMeshSize()[1]), CoeffAnionB(7, phase.GetMeshSize()[0]),
 	CoeffCationA(7, phase.GetMeshSize()[1]), CoeffCationB(7, phase.GetMeshSize()[0]),
-	CoeffPotentialA(3, phase.GetMeshSize()[1]), CoeffPotentialB(3, phase.GetMeshSize[0])
+	CoeffPotentialA(3, phase.GetMeshSize()[1]), CoeffPotentialB(3, phase.GetMeshSize()[0])
 {}
 
 void EquationCoefficient::CalculateCoeff(Eigen::MatrixXd& GeoCoeffA, Eigen::MatrixXd GeoCoeffB)
