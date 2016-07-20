@@ -16,7 +16,10 @@ public:
 		   const IonSystem& fmembraneIons, const IonSystem& fsolutionIons, 
 		   PotentialSignal& fSignal, 
 		   const nernst_equation& fThermo,
-		   const ElectrodeReaction& ElecR);
+		   const ElectrodeReaction& fElecR,
+		   const InterfaceReaction& fCationTransR,
+		   const InterfaceReaction& fProductTransR,
+		   const InterfaceReaction& fReactantTransR);
 	void initialise();
 	
 private:
@@ -50,6 +53,9 @@ private:
 	const IonSystem& membraneIons;
 	const IonSystem& solutionIons;
 	const unsigned long MatrixLen;
+	const InterfaceReaction& CationTransR;
+	const InterfaceReaction& ProductTransR;
+	const InterfaceReaction& ReactantTransR;
 };
 
 class EquationCoefficient
