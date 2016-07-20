@@ -60,6 +60,7 @@ public:
 	InterfaceReaction(nernst_equation& fInnerThermo);
 	double kf(double dE) const { return InnerThermo.k0*exp(-InnerThermo.alfa*InnerThermo.nF_R_T*(dE - InnerThermo.E_formal)); } // dE is the potential difference between the membrane and the solution phase
 	double kb(double dE) const { return InnerThermo.k0*exp(-(1 - InnerThermo.alfa)*InnerThermo.nF_R_T*(dE - InnerThermo.E_formal)); };
+	double EqulibriumPotential(double C_solution, double C_membrane) const { return  InnerThermo.E_formal + log(C_solution / C_membrane) / InnerThermo.nF_R_T; }
 private:
 
 	nernst_equation& InnerThermo;
