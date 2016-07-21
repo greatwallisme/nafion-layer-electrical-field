@@ -15,7 +15,7 @@ public:
 class IonSystem
 {
 public:
-	IonSystem(double fEpsilon_r, double Epsilon_0, Ion& fReactant, Ion& fProduct, Ion& fSupportCation, Ion& fSupportAnion, Ion& fImmobileCharge = Ion(0.0, 0), double fCImmobileCharge = 0.0);
+	IonSystem(double fEpsilon_r, double Epsilon_0, Ion& fReactant, Ion& fProduct, Ion& fSupportCation, Ion& fSupportAnion, Ion& fImmobileCharge = Ion(0.0, 0, 0.0), double fCImmobileCharge = 0.0);
 
 	const Ion& Reactant; // diffusion coefficient of the reactant
 	const Ion& Product; // diffusion coefficient of the product
