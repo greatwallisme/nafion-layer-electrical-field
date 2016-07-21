@@ -6,9 +6,10 @@ typedef Eigen::SparseMatrix<double> SpMatrixXd;
 class Ion
 {
 public:
-	Ion(double fD, int fZ);
+	Ion(double fD, int fZ, double C);
 	const double D;
 	const int Z;
+	double Cinitial;
 };
 
 class IonSystem

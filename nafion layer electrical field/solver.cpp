@@ -487,8 +487,8 @@ void solver::CalculateF()
 
 	mxn = solution.Getmxn();
 	// Solution
-	for (unsigned long i = 1; i < solution.m - 1; ++i) {
-		for (unsigned long j = 1; j < solution.n - 1; ++j) {
+	for (unsigned long i = 0; i < solution.m - 1; ++i) {
+		for (unsigned long j = 0; j < solution.n - 1; ++j) {
 
 			// Reactant index
 			rea_j_i = solution.n*i + j + 5*membrane.Getmxn();
@@ -521,20 +521,227 @@ void solver::CalculateF()
 			pot_j_im1 = pot_j_i - solution.n;
 			pot_j_ip1 = pot_j_i + solution.n;
 
-			//Reactant
-			F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_jm1_i), X(rea_j_ip1), X(rea_j_im1),
-				X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
-			//Product
-			F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_jm1_i), X(pro_j_ip1), X(pro_j_im1),
-				X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
-			//Anion
-			F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_jm1_i), X(ani_j_ip1), X(ani_j_im1),
-				X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
-			//Cation
-			F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_jm1_i), X(cat_j_ip1), X(cat_j_im1),
-				X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
-			//Potential
-			F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			if (i > 0 && i < solution.m - 1 && j > 0 && j < solution.n - 1) {
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_jm1_i), X(rea_j_ip1), X(rea_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_jm1_i), X(pro_j_ip1), X(pro_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_jm1_i), X(ani_j_ip1), X(ani_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_jm1_i), X(cat_j_ip1), X(cat_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			else if (i > 0 && i < solution.m - 1 && j == solution.n - 1) {
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), SI.Reactant.Cinitial, X(rea_jm1_i), X(rea_j_ip1), X(rea_j_im1),
+					X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), SI.Product.Cinitial, X(pro_jm1_i), X(pro_j_ip1), X(pro_j_im1),
+					X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), SI.SupportAnion.Cinitial, X(ani_jm1_i), X(ani_j_ip1), X(ani_j_im1),
+					X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), SI.SupportCation.Cinitial, X(cat_jm1_i), X(cat_j_ip1), X(cat_j_im1),
+					X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			else if (i == 0 && j > 0 && j < solution.n - 1) {
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_jm1_i), X(rea_j_ip1), X(rea_j_i),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_jm1_i), X(pro_j_ip1), X(pro_j_i),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_jm1_i), X(ani_j_ip1), X(ani_j_i),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_jm1_i), X(cat_j_ip1), X(cat_j_i),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			else if (i == solution.m - 1 && j > 0 && j < solution.n - 1) {
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_jm1_i), SI.Reactant.Cinitial, X(rea_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_jm1_i), SI.Product.Cinitial, X(pro_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_jm1_i), SI.SupportAnion.Cinitial, X(ani_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_jm1_i), SI.SupportAnion.Cinitial, X(cat_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			else if (i == 0 && j == solution.n - 1) {
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), SI.Reactant.Cinitial, X(rea_jm1_i), X(rea_j_ip1), X(rea_j_i),
+					X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), SI.Product.Cinitial, X(pro_jm1_i), X(pro_j_ip1), X(pro_j_i),
+					X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), SI.SupportAnion.Cinitial, X(ani_jm1_i), X(ani_j_ip1), X(ani_j_i),
+					X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), SI.SupportCation.Cinitial, X(cat_jm1_i), X(cat_j_ip1), X(cat_j_i),
+					X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), 0, X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			else if (i = solution.m - 1 && j == solution.n - 1) {
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), SI.Reactant.Cinitial, X(rea_jm1_i), SI.Reactant.Cinitial, X(rea_j_im1),
+					X(pot_j_i), 0, X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), SI.Product.Cinitial, X(pro_jm1_i), SI.Product.Cinitial, X(pro_j_im1),
+					X(pot_j_i), 0, X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), SI.SupportAnion.Cinitial, X(ani_jm1_i), SI.SupportAnion.Cinitial, X(ani_j_im1),
+					X(pot_j_i), 0, X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), SI.SupportCation.Cinitial, X(cat_jm1_i), SI.SupportCation.Cinitial, X(cat_j_im1),
+					X(pot_j_i), 0, X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), 0, X(pot_jm1_i), 0, X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			else if (i > 0 && i < membrane.m && j == 0) {
+
+				// index in the membrane phase
+				// Reactant index
+				unsigned long mrea_jm1_i = membrane.n*i + membrane.n - 1;
+				//Product index
+				unsigned long mpro_jm1_i = mrea_jm1_i + membrane.Getmxn();
+				//Anion index
+				unsigned long mani_jm1_i = mpro_jm1_i + membrane.Getmxn();
+				//Cation index
+				unsigned long mcat_jm1_i = mani_jm1_i + membrane.Getmxn();
+				//Potential index
+				unsigned long mpot_jm1_i = mcat_jm1_i + membrane.Getmxn();
+
+				double dE = X(pot_j_i) - X(mpot_jm1_i);
+				//Cation transfer rate
+				double kf = CationTransR.kf(dE);
+				double kb = CationTransR.kb(dE);
+				double CationTransRate = kf*X(cat_j_i) - kb*X(mcat_jm1_i);
+				//Product transfer rate
+				kf = ProductTransR.kf(dE);
+				kb = ProductTransR.kb(dE);
+				double ProductTransRate = kf*X(pro_j_i) - kb*X(mpro_jm1_i);
+				//Reactant transfer rate
+				kf = ReactantTransR.kf(0);
+				kb = ReactantTransR.kb(0);
+				double ReactantTransRate = kf*X(rea_j_i) - kb*X(mrea_jm1_i);
+
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), X(rea_j_ip1), X(rea_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				F(rea_j_i) -= ReactantTransRate / solution.dz0*Signal.dt;
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), X(pro_j_ip1), X(pro_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				F(pro_j_i) -= ProductTransRate / solution.dz0*Signal.dt;
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_j_i), X(ani_j_ip1), X(ani_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				F(cat_j_i) -= CationTransRate / solution.dz0*Signal.dt;
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			else if (j == 0 && i > membrane.m - 1 && i < solution.m - 1) {
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), X(rea_j_ip1), X(rea_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), X(pro_j_ip1), X(pro_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_j_i), X(ani_j_ip1), X(ani_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			else if (i == 0 && j == 0) {
+				// index in the membrane phase
+				// Reactant index
+				unsigned long mrea_jm1_i = membrane.n*i + membrane.n - 1;
+				//Product index
+				unsigned long mpro_jm1_i = mrea_jm1_i + membrane.Getmxn();
+				//Anion index
+				unsigned long mani_jm1_i = mpro_jm1_i + membrane.Getmxn();
+				//Cation index
+				unsigned long mcat_jm1_i = mani_jm1_i + membrane.Getmxn();
+				//Potential index
+				unsigned long mpot_jm1_i = mcat_jm1_i + membrane.Getmxn();
+
+				double dE = X(pot_j_i) - X(mpot_jm1_i);
+				//Cation transfer rate
+				double kf = CationTransR.kf(dE);
+				double kb = CationTransR.kb(dE);
+				double CationTransRate = kf*X(cat_j_i) - kb*X(mcat_jm1_i);
+				//Product transfer rate
+				kf = ProductTransR.kf(dE);
+				kb = ProductTransR.kb(dE);
+				double ProductTransRate = kf*X(pro_j_i) - kb*X(mpro_jm1_i);
+				//Reactant transfer rate
+				kf = ReactantTransR.kf(0);
+				kb = ReactantTransR.kb(0);
+				double ReactantTransRate = kf*X(rea_j_i) - kb*X(mrea_jm1_i);
+
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), X(rea_j_ip1), X(rea_j_i),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				F(rea_j_i) -= ReactantTransRate / solution.dz0*Signal.dt;
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), X(pro_j_ip1), X(pro_j_i),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				F(pro_j_i) -= ProductTransRate / solution.dz0*Signal.dt;
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_j_i), X(ani_j_ip1), X(ani_j_i),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_i),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				F(cat_j_i) -= CationTransRate / solution.dz0*Signal.dt;
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			else if (i == solution.m - 1 && j == 0) {
+				//Reactant
+				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), SI.Reactant.Cinitial, X(rea_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), 0, X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, solution.Cren);
+				//Product
+				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), SI.Product.Cinitial, X(pro_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), 0, X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, solution.Cprn);
+				//Anion
+				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_j_i), SI.SupportAnion.Cinitial, X(ani_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), 0, X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, solution.Cann);
+				//Cation
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), SI.SupportCation.Cinitial, X(cat_j_im1),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), 0, X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, solution.Ccan);
+				//Potential
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_j_i), 0, X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
+			}
+			
+			
 		}
 	}
 }
