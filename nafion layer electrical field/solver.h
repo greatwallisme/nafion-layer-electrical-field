@@ -61,14 +61,31 @@ private:
 	void GeoCoefficientA(mesh& phase, Eigen::MatrixXd& GeoCoeffA) const;
 	void GeoCoefficientB(mesh& phase, Eigen::MatrixXd& GeoCoeffB) const;
 	void initialiseX();
+
 	double BulkMTEquation(unsigned long i, unsigned long j,
 		double Xj_i, double Xjp1_i, double Xjm1_i, double Xj_ip1, double Xj_im1,
 		double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
 		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn);
+
+	//Derivatives
+	void MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
+		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn);
+
+	void MTDerivative00Init(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
+		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn);
+
+	void MTDerivative0iInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
+		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn);
+
 	double BulkPotEquation(unsigned long i, unsigned long j,
 		double Xrea_j_i, double Xpro_j_i, double Xani_j_i, double Xcat_j_i,
 		double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
 		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I);
+
+	void initialiseMatrixA();
 
 	mesh& membrane;
 	mesh& solution;
