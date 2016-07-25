@@ -1,5 +1,6 @@
 #include "solver.h"
 #include <vector>
+#include <iostream>
 
 typedef Eigen::Triplet<double> Tt;
 
@@ -49,6 +50,9 @@ void solver::initialise()
 
 	// initialise variable vector X
 	initialiseX();
+
+	// initialise MatrixA
+
 }
 
 void solver::GeoCoefficientA(mesh& phase, Eigen::MatrixXd& GeoCoeffA) const
@@ -782,35 +786,15 @@ void solver::CalculateF()
 void solver::initialiseMatrixA()
 {
 	//Reactant index
-	unsigned long rea_j_i = 0UL;
-	unsigned long rea_jm1_i = 0UL;
-	unsigned long rea_jp1_i = 0UL;
-	unsigned long rea_j_im1 = 0UL;
-	unsigned long rea_j_ip1 = 0UL;
+	unsigned long rea_j_i(0UL), rea_jm1_i(0UL), rea_jp1_i(0UL), rea_j_im1(0UL), rea_j_ip1(0UL);
 	//Product index
-	unsigned long pro_j_i = 0UL;
-	unsigned long pro_jm1_i = 0UL;
-	unsigned long pro_jp1_i = 0UL;
-	unsigned long pro_j_im1 = 0UL;
-	unsigned long pro_j_ip1 = 0UL;
+	unsigned long pro_j_i(0UL), pro_jm1_i(0UL), pro_jp1_i(0UL), pro_j_im1(0UL), pro_j_ip1(0UL);
 	//Anion index
-	unsigned long ani_j_i = 0UL;
-	unsigned long ani_jm1_i = 0UL;
-	unsigned long ani_jp1_i = 0UL;
-	unsigned long ani_j_im1 = 0UL;
-	unsigned long ani_j_ip1 = 0UL;
+	unsigned long ani_j_i(0UL), ani_jm1_i(0UL), ani_jp1_i(0UL), ani_j_im1(0UL), ani_j_ip1(0UL);
 	//Cation index
-	unsigned long cat_j_i = 0UL;
-	unsigned long cat_jm1_i = 0UL;
-	unsigned long cat_jp1_i = 0UL;
-	unsigned long cat_j_im1 = 0UL;
-	unsigned long cat_j_ip1 = 0UL;
+	unsigned long cat_j_i(0UL), cat_jm1_i(0UL), cat_jp1_i(0UL), cat_j_im1(0UL), cat_j_ip1(0UL);
 	//Potential index
-	unsigned long pot_j_i = 0UL;
-	unsigned long pot_jm1_i = 0UL;
-	unsigned long pot_jp1_i = 0UL;
-	unsigned long pot_j_im1 = 0UL;
-	unsigned long pot_j_ip1 = 0UL;
+	unsigned long pot_j_i(0UL), pot_jm1_i(0UL), pot_jp1_i(0UL), pot_j_im1(0UL), pot_j_ip1(0UL);
 
 	unsigned long mxn = membrane.Getmxn();
 	vector<Tt> MatrixAlist;
@@ -850,8 +834,35 @@ void solver::initialiseMatrixA()
 			pot_jp1_i = pot_j_i + 1;
 			pot_j_im1 = pot_j_i - membrane.n;
 			pot_j_ip1 = pot_j_i + membrane.n;
+		
 
+			if (i != 0 && j != 0 && i != membrane.m - 1 && j != membrane.n - 1) {
 
+			}
+			else if (j == 0 && i != 0 && i != membrane.m - 1) {
+
+			}
+			else if (j == membrane.n - 1 && i != 0 && i != membrane.m - 1) {
+
+			}
+			else if (i == 0 && j != 0 && j != membrane.n - 1) {
+
+			}
+			else if (i == membrane.n - 1 && j != 0 && j != membrane.n - 1) {
+
+			}
+			else if (i == 0 && j == 0) {
+
+			}
+			else if (j == 0 && i == membrane.m - 1) {
+
+			}
+			else if (i == 0 && j == membrane.n - 1) {
+
+			}
+			else if (j == membrane.n - 1 && i == membrane.m - 1) {
+
+			}
 
 		}
 	}
@@ -895,7 +906,7 @@ inline double solver::BulkMTEquation(unsigned long i, unsigned long j, double Xj
 
 void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
 	unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn) const
+	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn, Boundary boundary) const
 {
 	double Djm1_i = CA(1, j) - CA(4, j)*(X(pot_jp1_i) - X(pot_jm1_i));
 	double Djp1_i = CA(2, j) + CA(4, j)*(X(pot_jp1_i) - X(pot_jm1_i));
@@ -909,7 +920,9 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 	double Dpot_j_i = CB(3, i)*X(j_i);
 
 
-	if (i != 0 && j != 0 && i != membrane.m - 1 && j != membrane.n - 1) {
+	switch (boundary)
+	{
+	case solver::bulk:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
@@ -920,8 +933,8 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i));
-	}
-	else if (j == 0 && i != 0 && i != membrane.m - 1) {
+		break;
+	case solver::bottom:
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
@@ -930,8 +943,8 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
-	}
-	else if (j == membrane.n - 1 && i != 0 && i != membrane.m - 1) {
+		break;
+	case solver::top:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
@@ -940,8 +953,8 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jp1_i));
-	}
-	else if (i == 0 && j != 0 && j != membrane.n - 1) {
+		break;
+	case solver::left:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
@@ -950,8 +963,8 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_j_im1));
-	}
-	else if (i == membrane.n - 1 && j != 0 && j != membrane.n - 1) {
+		break;
+	case solver::right:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
@@ -960,44 +973,49 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_j_ip1));
-	}
-	else if (i == 0 && j == 0) {
+		break;
+	case solver::left_bottom_corner:
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
 		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1));
-	}
-	else if (j == 0 && i == membrane.m - 1) {
+		break;
+	case solver::right_bottom_corner:
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_ip1));
-	}
-	else if (i == 0 && j == membrane.n - 1) {
+		break;
+	case solver::left_upper_corner:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
 		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djp1_i + Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_jm1_i, Dpot_jm1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jp1_i + Dpot_j_im1));
-	}
-	else if (j == membrane.n - 1 && i == membrane.m - 1) {
+		break;
+	case solver::right_upper_corner:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djp1_i + Dj_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_jm1_i, Dpot_jm1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jp1_i + Dpot_j_ip1));
+		break;
+	default:
+		std::cout << "miss membrane phase (" << i << ", " << j << ")\n";
+		exit(EXIT_FAILURE);
+		break;
 	}
 }
 
 void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
 	unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn) const
+	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn, Boundary boundary) const
 {
 	double Djm1_i = CA(1, j) - CA(4, j)*(X(pot_jp1_i) - X(pot_jm1_i));
 	double Djp1_i = CA(2, j) + CA(4, j)*(X(pot_jp1_i) - X(pot_jm1_i));
@@ -1010,7 +1028,9 @@ void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 	double Dpot_j_ip1 = CB(5, i)*X(j_i) + CB(4, i)*(X(j_ip1) - X(j_im1));
 	double Dpot_j_i = CB(3, i)*X(j_i);
 
-	if (i != 0 && j != 0 && i != solution.m - 1 && j != solution.n - 1) {
+	switch (boundary)
+	{
+	case solver::bulk:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
@@ -1021,8 +1041,8 @@ void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i));
-	}
-	else if (j == 0 && i != 0 && i != solution.m - 1) {
+		break;
+	case solver::bottom:
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
@@ -1031,8 +1051,8 @@ void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
-	}
-	else if (j == solution.n - 1 && i != 0 && i != solution.m - 1) {
+		break;
+	case solver::top:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
@@ -1041,8 +1061,7 @@ void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i));
-	}
-	else if (i == 0 && j != 0 && j != solution.n - 1) {
+	case solver::left:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
@@ -1051,8 +1070,8 @@ void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_j_im1));
-	}
-	else if (i == solution.n - 1 && j != 0 && j != solution.n - 1) {
+		break;
+	case solver::right:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
@@ -1061,41 +1080,45 @@ void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i));
-	}
-	else if (i == 0 && j == 0) {
+		break;
+	case solver::left_bottom_corner:
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
 		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1));
-	}
-	else if (j == 0 && i == solution.m - 1) {
+		break;
+	case solver::right_bottom_corner:
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
-	}
-	else if (i == 0 && j == solution.n - 1) {
+		break;
+	case solver::left_upper_corner:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
 		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_jm1_i, Dpot_jm1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_j_im1));
-	}
-	else if (j == solution.n - 1 && i == solution.m - 1) {
+		break;
+	case solver::right_upper_corner:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i));
 		MatrixAlist.push_back(Tt(j_i, pot_jm1_i, Dpot_jm1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i));
+		break;
+	default:
+		std::cout << "miss solution phase (" << i << ", " << j << ")\n";
+		exit(EXIT_FAILURE);
+		break;
 	}
 }
-
 
 void solver::MTDerivative00Init(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
 	unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,

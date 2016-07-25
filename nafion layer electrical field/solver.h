@@ -57,6 +57,8 @@ private:
 	EquationCoefficient MemEquationCoefficient; // first three elements: diffusion, last four elements: migration
 	EquationCoefficient SolEquationCoefficient; // first three elements: diffusion, last four elements: migration
 
+	enum Boundary { bulk, bottom, top, left, right, left_bottom_corner, right_bottom_corner, left_upper_corner, right_upper_corner }; // add enum struct for boundary
+
 	void CalculateF();
 	void GeoCoefficientA(mesh& phase, Eigen::MatrixXd& GeoCoeffA) const;
 	void GeoCoefficientB(mesh& phase, Eigen::MatrixXd& GeoCoeffB) const;
@@ -70,11 +72,11 @@ private:
 	//Derivatives
 	void MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
 		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn) const;
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn, Boundary boundary) const;
 
 	void SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
 		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn) const;
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn, Boundary boundary) const;
 
 	void MTDerivative00Init(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
 		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
