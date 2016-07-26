@@ -22,12 +22,14 @@ double nernst_equation::DrivingPotential(double K)
 
 ElectrodeReaction::ElectrodeReaction(double fEpsilon_d, double fEpsilon_oc, double fEpsilon_ic, double fmu_i, double fmu, nernst_equation& fInnerThermo) :
 	Epsilon_d(fEpsilon_d), Epsilon_oc(fEpsilon_oc), Epsilon_ic(fEpsilon_ic), mu_i(fmu_i), mu(fmu), InnerThermo(fInnerThermo),
-	DrivingPotentialCoeff(-(Epsilon_d / Epsilon_oc*(mu - mu_i) + Epsilon_d / Epsilon_ic*mu))
+	DrivingPotentialCoeff(-(Epsilon_d / Epsilon_oc*(mu - mu_i) + Epsilon_d / Epsilon_ic*mu)), nF_R_T(InnerThermo.nF_R_T),
+	minusAlfaNF_R_T(InnerThermo.AlfaMinusOneNF_R_T), AlfaMinusOneNF_R_T(InnerThermo.AlfaMinusOneNF_R_T), E_formal(InnerThermo.E_formal)
 {
 }
 
 InterfaceReaction::InterfaceReaction(nernst_equation& fInnerThermo) :
-	InnerThermo(fInnerThermo)
+	InnerThermo(fInnerThermo), nF_R_T(InnerThermo.nF_R_T),
+	minusAlfaNF_R_T(InnerThermo.AlfaMinusOneNF_R_T), AlfaMinusOneNF_R_T(InnerThermo.AlfaMinusOneNF_R_T)
 {
 
 }
