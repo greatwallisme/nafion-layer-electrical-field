@@ -57,7 +57,7 @@ private:
 	EquationCoefficient MemEquationCoefficient; // first three elements: diffusion, last four elements: migration
 	EquationCoefficient SolEquationCoefficient; // first three elements: diffusion, last four elements: migration
 
-	enum Boundary { bulk, bottom, top, left, right, left_bottom_corner, right_bottom_corner, left_upper_corner, right_upper_corner }; // add enum struct for boundary
+	enum Boundary { bulk, bottom, top, left, right, right_bottom, left_bottom_corner, right_bottom_corner, left_upper_corner, right_upper_corner }; // add enum struct for boundary
 	enum Species {Reactant, Product, Anion, Cation, Potential};
 
 	void CalculateF();

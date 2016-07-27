@@ -637,10 +637,6 @@ void solver::CalculateF()
 				unsigned long mrea_jm1_i = membrane.n*i + membrane.n - 1;
 				//Product index
 				unsigned long mpro_jm1_i = mrea_jm1_i + membrane.Getmxn();
-				/*
-				//Anion index
-				unsigned long mani_jm1_i = mpro_jm1_i + membrane.Getmxn();
-				*/
 				//Cation index
 				unsigned long mcat_jm1_i = mpro_jm1_i + membrane.Getmxn();
 				//Potential index
@@ -700,10 +696,6 @@ void solver::CalculateF()
 				unsigned long mrea_jm1_i = membrane.n*i + membrane.n - 1;
 				//Product index
 				unsigned long mpro_jm1_i = mrea_jm1_i + membrane.Getmxn();
-				/*
-				//Anion index
-				unsigned long mani_jm1_i = mpro_jm1_i + membrane.Getmxn();
-				*/
 				//Cation index
 				unsigned long mcat_jm1_i = mpro_jm1_i + membrane.Getmxn();
 				//Potential index
@@ -778,6 +770,7 @@ void solver::initialiseMatrixA()
 
 	unsigned long mxn = membrane.Getmxn();
 	vector<Tt> MatrixAlist;
+	MatrixAlist.reserve((membrane.Getmxn() * 4 + solution.Getmxn() * 5) * 10);
 	
 	//Calculate membrane
 	for (unsigned long i = 0; i < membrane.m - 1; ++i) {
@@ -935,15 +928,15 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i));
 		break;
 	case solver::bottom:
-		double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
-		double kf = ElecR.kf(DrivingPotential);
-		double kb = ElecR.kb(DrivingPotential);
-		double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
-		double erDpot_j_i = -Dpot_jp1_i;
-
 		switch (species)
 		{
 		case solver::Reactant:
+			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double kf = ElecR.kf(DrivingPotential);
+			double kb = ElecR.kb(DrivingPotential);
+			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
+			double erDpot_j_i = -Dpot_jp1_i;
+
 			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 			MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
@@ -956,6 +949,12 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			MatrixAlist.push_back(Tt(j_i, j_i + membrane.Getmxn(), kf / membrane.dz*Signal.dt));
 			break;
 		case solver::Product:
+			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double kf = ElecR.kf(DrivingPotential);
+			double kb = ElecR.kb(DrivingPotential);
+			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
+			double erDpot_j_i = -Dpot_jp1_i;
+
 			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 			MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
@@ -979,7 +978,7 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			break;
 		default:
 			std::cout << "No " << species;
-			exit(EXIT_FAILURE);
+			std::exit(EXIT_FAILURE);
 			break;
 		}
 		break;
@@ -1031,7 +1030,6 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			MatrixAlist.push_back(Tt(j_i, spro_jp1_i, kf / membrane.dz*Signal.dt));
 			MatrixAlist.push_back(Tt(j_i, spot_jp1_i, inDspot_jp1_i / membrane.dz*Signal.dt));
 			break;
-
 		case solver::Cation:
 			//Cation index
 			unsigned long scat_jp1_i = solution.n*i + 3 * solution.Getmxn() + 4 * membrane.Getmxn();
@@ -1057,7 +1055,7 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			break;
 		default:
 			std::cout << "miss membrane phase (" << i << ", " << j << ")\n";
-			exit(EXIT_FAILURE);
+			std::exit(EXIT_FAILURE);
 			break;
 		}
 		break;
@@ -1085,6 +1083,12 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		switch (species)
 		{
 		case solver::Reactant:
+			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double kf = ElecR.kf(DrivingPotential);
+			double kb = ElecR.kb(DrivingPotential);
+			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
+			double erDpot_j_i = -Dpot_jp1_i;
+
 			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
 			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1 - kb / membrane.dz*Signal.dt));
@@ -1095,6 +1099,12 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			MatrixAlist.push_back(Tt(j_i, j_i + membrane.Getmxn(), kf / membrane.dz*Signal.dt));
 			break;
 		case solver::Product:
+			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double kf = ElecR.kf(DrivingPotential);
+			double kb = ElecR.kb(DrivingPotential);
+			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
+			double erDpot_j_i = -Dpot_jp1_i;
+
 			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
 			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1 + kb / membrane.dz*Signal.dt));
@@ -1114,7 +1124,7 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			break;
 		default:
 			std::cout << "No " << species;
-			exit(EXIT_FAILURE);
+			std::exit(EXIT_FAILURE);
 			break;
 		}
 		break;
@@ -1122,6 +1132,12 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		switch (species)
 		{
 		case solver::Reactant:
+			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double kf = ElecR.kf(DrivingPotential);
+			double kb = ElecR.kb(DrivingPotential);
+			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
+			double erDpot_j_i = -Dpot_jp1_i;
+
 			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 			MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_ip1 - kb / membrane.dz*Signal.dt));
@@ -1132,6 +1148,12 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			MatrixAlist.push_back(Tt(j_i, j_i + membrane.Getmxn(), kf / membrane.dz*Signal.dt));
 			break;
 		case solver::Product:
+			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double kf = ElecR.kf(DrivingPotential);
+			double kb = ElecR.kb(DrivingPotential);
+			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
+			double erDpot_j_i = -Dpot_jp1_i;
+
 			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
 			MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_ip1 + kb / membrane.dz*Signal.dt));
@@ -1151,7 +1173,7 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			break;
 		default:
 			std::cout << "No " << species;
-			exit(EXIT_FAILURE);
+			std::exit(EXIT_FAILURE);
 			break;
 		}
 		break;
@@ -1220,7 +1242,7 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			break;
 		default:
 			std::cout << "No " << species;
-			exit(EXIT_FAILURE);
+			std::exit(EXIT_FAILURE);
 			break;
 		}
 		break;
@@ -1289,13 +1311,13 @@ void solver::MembraneMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 			break;
 		default:
 			std::cout << "No " << species;
-			exit(EXIT_FAILURE);
+			std::exit(EXIT_FAILURE);
 			break;
 		}
 		break;
 	default:
 		std::cout << "miss membrane phase (" << i << ", " << j << ")\n";
-		exit(EXIT_FAILURE);
+		std::exit(EXIT_FAILURE);
 		break;
 	}
 }
@@ -1330,14 +1352,87 @@ void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i));
 		break;
 	case solver::bottom:
-		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
-		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
-		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
-		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i));
-		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
-		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
-		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
-		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
+		switch (species)
+		{
+		case solver::Reactant:
+			unsigned long mrea_jm1_i = membrane.n*i + membrane.n - 1;
+			//Reactant transfer rate
+			double kf = ReactantTransR.kf(0);
+			double kb = ReactantTransR.kb(0);
+			double ReactantTransRate = kf*X(j_i) - kb*X(mrea_jm1_i);
+
+			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
+			MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
+			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
+			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i - kf / solution.dz * Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
+			MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
+
+			MatrixAlist.push_back(Tt(j_i, mrea_jm1_i, kb / solution.dz*Signal.dt));
+			break;
+		case solver::Product:
+			unsigned long mpro_jm1_i = membrane.n*i + membrane.n - 1 + membrane.Getmxn();
+			//Potential index
+			unsigned long mpot_jm1_i = membrane.n*i + membrane.n - 1 + 3*membrane.Getmxn();
+			double dE = X(pot_j_i) - X(mpot_jm1_i);
+			double kf = ProductTransR.kf(dE);
+			double kb = ProductTransR.kb(dE);
+			double trDmpot_jm1_i = ProductTransR.minusAlfaNF_R_T*kf*X(j_i) - ProductTransR.AlfaMinusOneNF_R_T*kb*X(mpro_jm1_i);
+			double trDpot_j_i = -trDmpot_jm1_i;
+
+			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
+			MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
+			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
+			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i - kf / solution.dz * Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
+			MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + trDpot_j_i / solution.dz*Signal.dt));
+
+			MatrixAlist.push_back(Tt(j_i, mpot_jm1_i, trDmpot_jm1_i / solution.dz*Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, mpro_jm1_i, kb / solution.dz*Signal.dt));
+
+			break;
+		case solver::Anion:
+			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
+			MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
+			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
+			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i));
+			MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
+			MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
+			break;
+		case solver::Cation:
+			//Potential index
+			unsigned long mcat_jm1_i = membrane.n*i + membrane.n - 1 + 2*membrane.Getmxn();
+			unsigned long mpot_jm1_i = membrane.n*i + membrane.n - 1 + 3 * membrane.Getmxn();
+			double dE = X(pot_j_i) - X(mpot_jm1_i);
+			//Cation transfer rate
+			double kf = CationTransR.kf(dE);
+			double kb = CationTransR.kb(dE);
+			double trDmpot_jm1_i = CationTransR.minusAlfaNF_R_T*kf*X(j_i) - CationTransR.AlfaMinusOneNF_R_T*kb*X(mcat_jm1_i);
+			double trDpot_j_i = -trDmpot_jm1_i;
+
+			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
+			MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
+			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
+			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i - kf / solution.dz * Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
+			MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + trDpot_j_i / solution.dz*Signal.dt));
+
+			MatrixAlist.push_back(Tt(j_i, mpot_jm1_i, trDmpot_jm1_i / solution.dz*Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, mpro_jm1_i, kb / solution.dz*Signal.dt));
+			break;
+		default:
+			std::cout << "No " << species;
+			std::exit(EXIT_FAILURE);
+			break;
+		}
 		break;
 	case solver::top:
 		MatrixAlist.push_back(Tt(j_i, jm1_i, Djm1_i));
@@ -1368,13 +1463,89 @@ void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i));
 		break;
-	case solver::left_bottom_corner:
+	case solver::right_bottom:
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
+		MatrixAlist.push_back(Tt(j_i, j_im1, Dj_im1));
 		MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
-		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1));
+		MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i));
 		MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
+		MatrixAlist.push_back(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
-		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1));
+		MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
+		break;
+	case solver::left_bottom_corner:
+		switch (species)
+		{
+		case solver::Reactant:
+			unsigned long mrea_jm1_i = membrane.n*i + membrane.n - 1;
+			//Reactant transfer rate
+			double kf = ReactantTransR.kf(0);
+			double kb = ReactantTransR.kb(0);
+			double ReactantTransRate = kf*X(j_i) - kb*X(mrea_jm1_i);
+
+			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
+			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
+			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1 - kf / solution.dz * Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
+			MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1));
+
+			MatrixAlist.push_back(Tt(j_i, mrea_jm1_i, kb / solution.dz*Signal.dt));
+			break;
+		case solver::Product:
+			unsigned long mpro_jm1_i = membrane.n*i + membrane.n - 1 + membrane.Getmxn();
+			//Potential index
+			unsigned long mpot_jm1_i = membrane.n*i + membrane.n - 1 + 3 * membrane.Getmxn();
+			double dE = X(pot_j_i) - X(mpot_jm1_i);
+			double kf = ProductTransR.kf(dE);
+			double kb = ProductTransR.kb(dE);
+			double trDmpot_jm1_i = ProductTransR.minusAlfaNF_R_T*kf*X(j_i) - ProductTransR.AlfaMinusOneNF_R_T*kb*X(mpro_jm1_i);
+			double trDpot_j_i = -trDmpot_jm1_i;
+
+			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
+			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
+			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1 - kf / solution.dz * Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
+			MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1 + trDpot_j_i / solution.dz*Signal.dt));
+
+			MatrixAlist.push_back(Tt(j_i, mpot_jm1_i, trDmpot_jm1_i / solution.dz*Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, mpro_jm1_i, kb / solution.dz*Signal.dt));
+			break;
+		case solver::Anion:
+			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
+			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
+			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1));
+			MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
+			MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1));
+			break;
+		case solver::Cation:
+			//Potential index
+			unsigned long mcat_jm1_i = membrane.n*i + membrane.n - 1 + 2 * membrane.Getmxn();
+			unsigned long mpot_jm1_i = membrane.n*i + membrane.n - 1 + 3 * membrane.Getmxn();
+			double dE = X(pot_j_i) - X(mpot_jm1_i);
+			//Cation transfer rate
+			double kf = CationTransR.kf(dE);
+			double kb = CationTransR.kb(dE);
+			double trDmpot_jm1_i = CationTransR.minusAlfaNF_R_T*kf*X(j_i) - CationTransR.AlfaMinusOneNF_R_T*kb*X(mcat_jm1_i);
+			double trDpot_j_i = -trDmpot_jm1_i;
+
+			MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
+			MatrixAlist.push_back(Tt(j_i, j_ip1, Dj_ip1));
+			MatrixAlist.push_back(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1 - kf / solution.dz * Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
+			MatrixAlist.push_back(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
+			MatrixAlist.push_back(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1 + trDpot_j_i / solution.dz*Signal.dt));
+
+			MatrixAlist.push_back(Tt(j_i, mpot_jm1_i, trDmpot_jm1_i / solution.dz*Signal.dt));
+			MatrixAlist.push_back(Tt(j_i, mpro_jm1_i, kb / solution.dz*Signal.dt));
+			break;
+		default:
+			std::cout << "No " << species;
+			std::exit(EXIT_FAILURE);
+			break;
+		}
 		break;
 	case solver::right_bottom_corner:
 		MatrixAlist.push_back(Tt(j_i, jp1_i, Djp1_i));
@@ -1402,7 +1573,7 @@ void solver::SolutionMTDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, 
 		break;
 	default:
 		std::cout << "miss solution phase (" << i << ", " << j << ")\n";
-		exit(EXIT_FAILURE);
+		std::exit(EXIT_FAILURE);
 		break;
 	}
 }
