@@ -1603,6 +1603,57 @@ inline double solver::BulkPotEquation(unsigned long i, unsigned long j, double X
 
 }
 
+void solver:: SolutionPotDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, double rea_j_i, double pro_j_i, double ani_j_i, double cat_j_i,
+	double pot_j_i, double pot_jp1_i, double pot_jm1_i, double pot_j_ip1, double pot_j_im1,
+	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, Boundary boundary) const
+{
+	double Dpot_jm1_i = CA(1, j);
+	double Dpot_jp1_i = CA(2, j);
+	double Dpot_j_im1 = CB(1, i);
+	double Dpot_j_ip1 = CB(2, j);
+	double Dpot_j_i = CA(0, j) + CB(0, i);
+	double Drea_j_i = I.Reactant.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dpro_j_i = I.Product.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dani_j_i = I.SupportAnion.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dcat_j_i = I.SupportCation.Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+
+	switch (boundary)
+	{
+	case solver::bulk:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_ip1));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+		break;
+	case solver::bottom:
+		break;
+	case solver::top:
+		break;
+	case solver::left:
+		break;
+	case solver::right:
+		break;
+	case solver::right_bottom:
+		break;
+	case solver::left_bottom_corner:
+		break;
+	case solver::right_bottom_corner:
+		break;
+	case solver::left_upper_corner:
+		break;
+	case solver::right_upper_corner:
+		break;
+	default:
+		break;
+	}
+
+}
+
 EquationCoefficient::EquationCoefficient(const IonSystem& fIons, const mesh& phase, const PotentialSignal& fSignal, const nernst_equation& fThermo) :
 	Ions(fIons), Signal(fSignal), F_R_T(fThermo.F_R_T),
 	CoeffProductA(7, phase.GetMeshSize()[1]), CoeffProductB(7, phase.GetMeshSize()[0]),
