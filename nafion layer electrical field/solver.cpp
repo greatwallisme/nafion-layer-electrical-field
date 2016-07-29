@@ -1624,33 +1624,121 @@ void solver:: SolutionPotDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i
 		MatrixAlist.push_back(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
 		MatrixAlist.push_back(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
 		MatrixAlist.push_back(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
-		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_ip1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i));
 		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
 		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
 		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	case solver::bottom:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	case solver::top:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	case solver::left:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_j_im1));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	case solver::right:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	case solver::right_bottom:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	case solver::left_bottom_corner:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i +Dpot_j_im1));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	case solver::right_bottom_corner:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	case solver::left_upper_corner:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_j_im1));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	case solver::right_upper_corner:
+		MatrixAlist.push_back(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));;
+		MatrixAlist.push_back(Tt(pot_j_i, pot_j_i, Dpot_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, rea_j_i, Drea_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, pro_j_i, Dpro_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, ani_j_i, Dani_j_i));
+		MatrixAlist.push_back(Tt(pot_j_i, cat_j_i, Dcat_j_i));
 		break;
 	default:
+		std::cout << "miss solution phase (" << i << ", " << j << ")\n";
+		std::exit(EXIT_FAILURE);
 		break;
 	}
+
+}
+
+void solver::MembranePotDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, double rea_j_i, double pro_j_i, double ani_j_i, double cat_j_i,
+	double pot_j_i, double pot_jp1_i, double pot_jm1_i, double pot_j_ip1, double pot_j_im1,
+	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, Boundary boundary) const
+{
+	double Dpot_jm1_i = CA(1, j);
+	double Dpot_jp1_i = CA(2, j);
+	double Dpot_j_im1 = CB(1, i);
+	double Dpot_j_ip1 = CB(2, j);
+	double Dpot_j_i = CA(0, j) + CB(0, i);
+	double Drea_j_i = I.Reactant.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dpro_j_i = I.Product.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dani_j_i = I.SupportAnion.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dcat_j_i = I.SupportCation.Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+
 
 }
 

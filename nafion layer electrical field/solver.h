@@ -88,6 +88,10 @@ private:
 		double pot_j_i, double pot_jp1_i, double pot_jm1_i, double pot_j_ip1, double pot_j_im1,
 		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, Boundary boundary) const;
 
+	void MembranePotDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, double rea_j_i, double pro_j_i, double ani_j_i, double cat_j_i,
+		double pot_j_i, double pot_jp1_i, double pot_jm1_i, double pot_j_ip1, double pot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, Boundary boundary) const;
+
 	void initialiseMatrixA();
 
 	mesh& membrane;
