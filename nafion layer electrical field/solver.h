@@ -84,12 +84,12 @@ private:
 		double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
 		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I);
 
-	void SolutionPotDerivativeInit( vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, double rea_j_i, double pro_j_i, double ani_j_i, double cat_j_i,
-		double pot_j_i, double pot_jp1_i, double pot_jm1_i, double pot_j_ip1, double pot_j_im1,
+	void SolutionPotDerivativeInit( vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long rea_j_i, unsigned long pro_j_i, unsigned long ani_j_i, unsigned long cat_j_i,
+		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
 		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, Boundary boundary) const;
 
-	void MembranePotDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, double rea_j_i, double pro_j_i, double ani_j_i, double cat_j_i,
-		double pot_j_i, double pot_jp1_i, double pot_jm1_i, double pot_j_ip1, double pot_j_im1,
+	void MembranePotDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i, unsigned long j, unsigned long rea_j_i, unsigned long pro_j_i, unsigned long cat_j_i,
+		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
 		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, Boundary boundary) const;
 
 	void initialiseMatrixA();
