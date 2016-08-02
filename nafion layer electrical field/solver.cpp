@@ -774,21 +774,286 @@ void solver::initialiseMatrixA()
 					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, solver::left);
 			}
 			else if (i == membrane.n - 1 && j != 0 && j != membrane.n - 1) {
-
+				// Reactant
+				MembraneMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_i, rea_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membrane.Cren, solver::right, solver::Reactant);
+				// Product
+				MembraneMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_i, pro_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membrane.Cprn, solver::right, solver::Product);
+				// Cation
+				MembraneMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_i, cat_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membrane.Ccan, solver::right, solver::Cation);
+				// Potential
+				MembranePotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, solver::right);
 			}
 			else if (i == 0 && j == 0) {
-
+				// Reactant
+				MembraneMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_ip1, rea_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membrane.Cren, solver::left_bottom_corner, solver::Reactant);
+				// Product
+				MembraneMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_ip1, pro_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membrane.Cprn, solver::left_bottom_corner, solver::Product);
+				// Cation
+				MembraneMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_ip1, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membrane.Ccan, solver::left_bottom_corner, solver::Cation);
+				// Potential
+				MembranePotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
+					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, solver::left_bottom_corner);
 			}
 			else if (j == 0 && i == membrane.m - 1) {
-
+				// Reactant
+				MembraneMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_i, rea_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membrane.Cren, solver::right_bottom_corner, solver::Reactant);
+				// Product
+				MembraneMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_i, pro_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membrane.Cprn, solver::right_bottom_corner, solver::Product);
+				// Cation
+				MembraneMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_i, cat_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membrane.Ccan, solver::right_bottom_corner, solver::Cation);
+				// Potential
+				MembranePotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, solver::right_bottom_corner);
 			}
 			else if (i == 0 && j == membrane.n - 1) {
-
+				// Reactant
+				MembraneMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_ip1, rea_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membrane.Cren, solver::left_upper_corner, solver::Reactant);
+				// Product
+				MembraneMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_ip1, pro_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membrane.Cprn, solver::left_upper_corner, solver::Product);
+				// Cation
+				MembraneMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_ip1, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membrane.Ccan, solver::left_upper_corner, solver::Cation);
+				// Potential
+				MembranePotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, solver::left_upper_corner);
 			}
 			else if (j == membrane.n - 1 && i == membrane.m - 1) {
-
+				// Reactant
+				MembraneMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_i, rea_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membrane.Cren, solver::right_upper_corner, solver::Reactant);
+				// Product
+				MembraneMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_i, pro_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membrane.Cprn, solver::right_upper_corner, solver::Product);
+				// Cation
+				MembraneMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_i, cat_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membrane.Ccan, solver::right_upper_corner, solver::Cation);
+				// Potential
+				MembranePotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, solver::right_upper_corner);
 			}
 
+		}
+	}
+
+	mxn = solution.Getmxn();
+
+	//Calculate solution
+	for (unsigned long i = 0; i < solution.m - 1; ++i) {
+		for (unsigned long j = 0; j < solution.n - 1; ++j) {
+
+			// Reactant index
+			rea_j_i = solution.n*i + j + 4 * membrane.Getmxn();
+			rea_jm1_i = rea_j_i - 1;
+			rea_jp1_i = rea_j_i + 1;
+			rea_j_im1 = rea_j_i - solution.n;
+			rea_j_ip1 = rea_j_i + solution.n;
+			//Product index
+			pro_j_i = rea_j_i + mxn;
+			pro_jm1_i = pro_j_i - 1;
+			pro_jp1_i = pro_j_i + 1;
+			pro_j_im1 = pro_j_i - solution.n;
+			pro_j_ip1 = pro_j_i + solution.n;
+			//Anion index
+			ani_j_i = pro_j_i + mxn;
+			ani_jm1_i = ani_j_i - 1;
+			ani_jp1_i = ani_j_i + 1;
+			ani_j_im1 = ani_j_i - solution.n;
+			ani_j_ip1 = ani_j_i + solution.n;
+			//Cation index
+			cat_j_i = ani_j_i + mxn;
+			cat_jm1_i = cat_j_i - 1;;
+			cat_jp1_i = cat_j_i + 1;
+			cat_j_im1 = cat_j_i - solution.n;
+			cat_j_ip1 = cat_j_i + solution.n;
+			//Potential index
+			pot_j_i = cat_j_i + mxn;
+			pot_jm1_i = pot_j_i - 1;
+			pot_jp1_i = pot_j_i + 1;
+			pot_j_im1 = pot_j_i - solution.n;
+			pot_j_ip1 = pot_j_i + solution.n;
+
+			if (i > 0 && i < solution.m - 1 && j > 0 && j < solution.n - 1) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::bulk, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::bulk, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_jp1_i, ani_jm1_i, ani_j_ip1, ani_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::bulk, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::bulk, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::bulk);
+			}
+			else if (i > 0 && i < solution.m - 1 && j == solution.n - 1) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::top, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::top, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_j_i, ani_jm1_i, ani_j_ip1, ani_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::top, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::top, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::top);
+			}
+			else if (i == 0 && j > 0 && j < solution.n - 1) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_ip1, rea_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::left, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_ip1, pro_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::left, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_jp1_i, ani_jm1_i, ani_j_ip1, ani_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::left, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_ip1, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::left, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::left);
+			}
+			else if (i == solution.m - 1 && j > 0 && j < solution.n - 1) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_i, rea_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::right, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_i, pro_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::right, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_jp1_i, ani_jm1_i, ani_j_i, ani_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::right, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_i, cat_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::right, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::right);
+			}
+			else if (i == 0 && j == solution.n - 1) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_ip1, rea_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::left_upper_corner, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_ip1, pro_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::left_upper_corner, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_j_i, ani_jm1_i, ani_j_ip1, ani_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::left_upper_corner, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_ip1, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::left_upper_corner, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::left_upper_corner);
+			}
+			else if (i = solution.m - 1 && j == solution.n - 1) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_i, rea_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::right_upper_corner, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_i, pro_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::right_upper_corner, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_j_i, ani_jm1_i, ani_j_i, ani_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::right_upper_corner, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_i, cat_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::right_upper_corner, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::right_upper_corner);
+			}
+			else if (i > 0 && i < membrane.m && j == 0) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::bottom, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::bottom, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_jp1_i, ani_j_i, ani_j_ip1, ani_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::bottom, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::bottom, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::bottom);
+			}
+			else if (j == 0 && i > membrane.m - 1 && i < solution.m - 1) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::right_bottom, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::right_bottom, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_jp1_i, ani_j_i, ani_j_ip1, ani_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::right_bottom, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::right_bottom, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::right_bottom);
+			}
+			else if (i == 0 && j == 0) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_ip1, rea_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::left_bottom_corner, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_ip1, pro_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::left_bottom_corner, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_jp1_i, ani_j_i, ani_j_ip1, ani_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::left_bottom_corner, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_ip1, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::left_bottom_corner, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::left_bottom_corner);
+			}
+			else if (i == solution.m - 1 && j == 0) {
+				//Reactant
+				SolutionMTDerivativeInit(MatrixAlist, i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_i, rea_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solution.Cren, solver::right_bottom_corner, solver::Reactant);
+				//Product
+				SolutionMTDerivativeInit(MatrixAlist, i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_i, pro_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solution.Cprn, solver::right_bottom_corner, solver::Product);
+				//Anion
+				SolutionMTDerivativeInit(MatrixAlist, i, j, ani_j_i, ani_jp1_i, ani_j_i, ani_j_i, ani_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solution.Cann, solver::right_bottom_corner, solver::Anion);
+				//Cation
+				SolutionMTDerivativeInit(MatrixAlist, i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_i, cat_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solution.Cren, solver::right_bottom_corner, solver::Cation);
+				//Potential
+				SolutionPotDerivativeInit(MatrixAlist, i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
+					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, solver::right_bottom_corner);
+			}
 		}
 	}
 }
@@ -1515,15 +1780,18 @@ void solver:: SolutionPotDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i
 	unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
 	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, Boundary boundary) const
 {
-	double Dpot_jm1_i = CA(1, j);
-	double Dpot_jp1_i = CA(2, j);
-	double Dpot_j_im1 = CB(1, i);
-	double Dpot_j_ip1 = CB(2, j);
-	double Dpot_j_i = CA(0, j) + CB(0, i);
-	double Drea_j_i = I.Reactant.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-	double Dpro_j_i = I.Product.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-	double Dani_j_i = I.SupportAnion.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-	double Dcat_j_i = I.SupportCation.Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dpot_jm1_i, Dpot_jp1_i, Dpot_j_im1, Dpot_j_ip1, Dpot_j_i, Drea_j_i, Dpro_j_i, Dani_j_i, Dcat_j_i;
+	if (j != solution.n - 1 && i != solution.m - 1) {
+		double Dpot_jm1_i = CA(1, j);
+		double Dpot_jp1_i = CA(2, j);
+		double Dpot_j_im1 = CB(1, i);
+		double Dpot_j_ip1 = CB(2, j);
+		double Dpot_j_i = CA(0, j) + CB(0, i);
+		double Drea_j_i = I.Reactant.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+		double Dpro_j_i = I.Product.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+		double Dani_j_i = I.SupportAnion.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+		double Dcat_j_i = I.SupportCation.Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	}
 
 	switch (boundary)
 	{
