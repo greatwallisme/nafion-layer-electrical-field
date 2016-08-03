@@ -7,7 +7,7 @@
 
 typedef Eigen::SparseMatrix<double> SpMatrixXd;
 typedef Eigen::SparseVector<double> SpVectorXd;
-typedef Eigen::Triplet<double> Td;
+typedef SpMatrixXd::InnerIterator InnerIterator;
 
 class EquationCoefficient
 {
@@ -93,6 +93,8 @@ private:
 		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, Boundary boundary) const;
 
 	void initialiseMatrixA();
+
+	void UpdateMatrixA();
 
 	mesh& membrane;
 	mesh& solution;

@@ -52,6 +52,7 @@ void solver::initialise()
 	initialiseX();
 
 	// initialise MatrixA
+	initialiseMatrixA();
 
 }
 
@@ -684,10 +685,10 @@ void solver::initialiseMatrixA()
 	//Potential index
 	unsigned long pot_j_i(0UL), pot_jm1_i(0UL), pot_jp1_i(0UL), pot_j_im1(0UL), pot_j_ip1(0UL);
 
-	unsigned long mxn = membrane.Getmxn();
 	vector<Tt> MatrixAlist;
 	MatrixAlist.reserve((membrane.Getmxn() * 4 + solution.Getmxn() * 5) * 10);
 	
+	unsigned long mxn = membrane.Getmxn();
 	//Calculate membrane
 	for (unsigned long i = 0; i < membrane.m - 1; ++i) {
 		for (unsigned long j = 0; j < membrane.n - 1; ++j) {
@@ -1056,6 +1057,9 @@ void solver::initialiseMatrixA()
 			}
 		}
 	}
+
+	// initialise MatrixA
+	MatrixA.setFromTriplets(MatrixAlist.begin(), MatrixAlist.end());
 }
 
 inline double solver::BulkMTEquation(unsigned long i, unsigned long j, double Xj_i, double Xjp1_i, double Xjm1_i, double Xj_ip1, double Xj_im1,
@@ -1960,6 +1964,13 @@ void solver::MembranePotDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i,
 		std::cout << "miss membrane phase (" << i << ", " << j << ")\n";
 		std::exit(EXIT_FAILURE);
 		break;
+	}
+}
+
+void solver::UpdateMatrixA()
+{
+	for (unsigned long k = 0; k < MatrixA.outerSize(); ++k) {
+		
 	}
 }
 

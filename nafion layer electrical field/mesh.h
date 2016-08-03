@@ -23,12 +23,15 @@ public:
 
 	const unsigned long Getmxn() const {return m*n;}
 
+	const unsigned long m; // r axis node number
+
+	const unsigned long n; // z axis node number
+
 private:
 	// define x and y interval
-	const unsigned long m; // r axis node number
+	
 	const double dr0; // , cm
 	const double dr; // , cm
-	const unsigned long n; // z axis node number
 	const double dz; // , cm
 	const double dz0; // , cm
 

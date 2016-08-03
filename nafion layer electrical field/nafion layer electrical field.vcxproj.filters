@@ -30,6 +30,9 @@
     <ClInclude Include="thermodynamics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SolverIndex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IonSystem.cpp">
@@ -48,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="thermodynamics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SolverIndex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
