@@ -2,7 +2,6 @@
 #include <vector>
 #include <iostream>
 
-typedef Eigen::Triplet<double> Tt;
 
 solver::solver(mesh& fmembrane, mesh& fsolution, const IonSystem& fmembraneIons, const IonSystem& fsolutionIons, 
 	PotentialSignal& fSignal, const nernst_equation& fThermo, const ElectrodeReaction& fElecR, 
@@ -16,8 +15,9 @@ solver::solver(mesh& fmembrane, mesh& fsolution, const IonSystem& fmembraneIons,
 	X(MatrixLen),
 	F(MatrixLen),
 	MemEquationCoefficient(fmembraneIons, fmembrane, fSignal, fThermo),
-	SolEquationCoefficient(fsolutionIons, fsolution, fSignal, fThermo)
-
+	SolEquationCoefficient(fsolutionIons, fsolution, fSignal, fThermo),
+	Index1d(OneDIndex(fmembrane, fsolution)),
+	Index2d(TwoDIndex(fmembrane, fsolution))
 {
 }
 
@@ -1969,8 +1969,22 @@ void solver::MembranePotDerivativeInit(vector<Tt>& MatrixAlist, unsigned long i,
 
 void solver::UpdateMatrixA()
 {
+	TwoDIndex::Species species;
+	unsigned long j;
+	unsigned long i;
+	Boundary boundary;
+
 	for (unsigned long k = 0; k < MatrixA.outerSize(); ++k) {
 		
+		std::tie(species, j, i) = Index2d(k);
+		InnerIterator it (MatrixA, k);
+
+		if (species < TwoDIndex::sReactant) {
+			UpdateMemDerivative(species, i, j, it);
+		}
+		else {
+			UpdateSolDerivative(species, i, j, it);
+		}
 	}
 }
 

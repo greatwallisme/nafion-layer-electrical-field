@@ -5,10 +5,12 @@
 #include <Eigen/Sparse>
 #include "thermodynamics.h"
 #include "EquationCoefficient.h"
+#include "SolverIndex.h"
 
 typedef Eigen::SparseMatrix<double> SpMatrixXd;
 typedef Eigen::SparseVector<double> SpVectorXd;
 typedef SpMatrixXd::InnerIterator InnerIterator;
+typedef Eigen::Triplet<double> Tt;
 
 class solver
 {
@@ -71,6 +73,8 @@ private:
 	void initialiseMatrixA();
 
 	void UpdateMatrixA();
+	void UpdateMemDerivative(TwoDIndex::Species species, unsigned long i, unsigned long j, InnerIterator& it);
+	void UpdateSolDerivative(TwoDIndex::Species species, unsigned long i, unsigned long j, InnerIterator& it);
 
 	mesh& membrane;
 	mesh& solution;
@@ -83,4 +87,7 @@ private:
 	const InterfaceReaction& CationTransR;
 	const InterfaceReaction& ProductTransR;
 	const InterfaceReaction& ReactantTransR;
+
+	const OneDIndex& Index1d;
+	const TwoDIndex& Index2d;
 };

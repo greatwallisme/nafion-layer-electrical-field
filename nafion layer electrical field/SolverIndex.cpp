@@ -32,18 +32,12 @@ TwoDIndex::TwoDIndex(const mesh& membrane, const mesh& solution)
 	unsigned long lenth = membrane.Getmxn()*TwoDIndex::sReactant + solution.Getmxn()*(TwoDIndex::Count - TwoDIndex::sReactant);
 	InnerIndex.resize(lenth);
 
-	for (unsigned long i = 0; i < lenth; ++i) {
-		InnerIndex[i].resize(3);
-	}
-
 	for (int k = OneDIndex::mReactant; k < OneDIndex::sReactant; ++k) {
 		for (int i = 0; i < membrane.m; ++i) {
 			for (int j = 0; j < membrane.n; ++j) {
 
 				unsigned long index = i*membrane.n + j + k*membrane.Getmxn();
-				InnerIndex[index][0] = k;
-				InnerIndex[index][1] = j;
-				InnerIndex[index][2] = i;
+				InnerIndex[index] = std::make_tuple(k, j, i);
 			}
 		}
 	}
@@ -53,9 +47,7 @@ TwoDIndex::TwoDIndex(const mesh& membrane, const mesh& solution)
 			for (int j = 0; j < solution.n; ++j) {
 
 				unsigned long index = i*membrane.n + j + membrane.Getmxn()*sReactant + solution.Getmxn()*(k - sReactant);
-				InnerIndex[index][0] = k;
-				InnerIndex[index][1] = j;
-				InnerIndex[index][2] = i;
+				InnerIndex[index] = std::make_tuple(k, j, i);
 			}
 		}
 	}
