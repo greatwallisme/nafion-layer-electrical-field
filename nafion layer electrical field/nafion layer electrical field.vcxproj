@@ -111,6 +111,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="EquationCoefficient.h" />
     <ClInclude Include="IonSystem.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="potential_signal.h" />
@@ -119,6 +120,7 @@
     <ClInclude Include="thermodynamics.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="EquationCoefficient.cpp" />
     <ClCompile Include="IonSystem.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
