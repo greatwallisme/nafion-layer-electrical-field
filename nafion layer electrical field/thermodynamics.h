@@ -24,7 +24,6 @@ public:
 									   // K: Cox/Cred
 
 private:
-	
 	const double R; // gas constant, J K^-1 mol^-1
 	const double T; // temperature, K
 	double phi;
