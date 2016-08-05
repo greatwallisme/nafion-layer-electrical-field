@@ -6,7 +6,8 @@ IonSystem::IonSystem(double fEpsilon_r, double fEpsilon_0, Ion& fReactant, Ion& 
 {
 }
 
-Ion::Ion(double fD, int fZ, double fCinitial) :
+Ion::Ion(double fD, int fZ, double fCinitial, mesh& Mesh) :
 	D(fD), Z(fZ), Cinitial(fCinitial)
 {
+
 }

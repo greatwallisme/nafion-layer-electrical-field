@@ -1,15 +1,19 @@
 #pragma once
 #include <Eigen/Sparse>
+#include "mesh.h"
 typedef Eigen::SparseVector<double> SpVectorXd;
 typedef Eigen::SparseMatrix<double> SpMatrixXd;
 
 class Ion
 {
 public:
-	Ion(double fD, int fZ, double C);
+	Ion(double fD, int fZ, double C, mesh& Mesh);
 	const double D;
 	const int Z;
 	double Cinitial;
+
+	Eigen::MatrixXd DenseN; // for ions species, it stores the concentration values; for potential, it stores the potential values
+	Eigen::MatrixXd DenseO;
 };
 
 class IonSystem
