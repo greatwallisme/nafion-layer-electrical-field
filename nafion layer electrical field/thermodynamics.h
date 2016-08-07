@@ -31,8 +31,6 @@ private:
 	const double k0; // standard rate constant
 };
 
-#endif
-
 class ElectrodeReaction
 {
 public:
@@ -61,7 +59,6 @@ private:
 
 class InterfaceReaction
 {
-
 public:
 	InterfaceReaction(nernst_equation& fInnerThermo);
 	double kf(double dE) const { return InnerThermo.k0*exp(InnerThermo.minusAlfaNF_R_T*(dE - InnerThermo.E_formal)); } // dE is the potential difference between the membrane and the solution phase
@@ -71,7 +68,10 @@ public:
 	const double nF_R_T; // nF/(RT)
 	const double minusAlfaNF_R_T; // -alfa*nF/(RT)
 	const double AlfaMinusOneNF_R_T; // (1-alfa)*nF/(RT)
+
 private:
 
 	nernst_equation& InnerThermo;
 };
+
+#endif

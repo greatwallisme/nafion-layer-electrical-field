@@ -41,34 +41,27 @@ private:
 	void GeoCoefficientB(mesh& phase, Eigen::MatrixXd& GeoCoeffB) const;
 	void initialiseX();
 
-	double BulkMTEquation(unsigned long i, unsigned long j,
-		double Xj_i, double Xjp1_i, double Xjm1_i, double Xj_ip1, double Xj_im1,
-		double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
+	double BulkMTEquation(long i, long j,
+		double Xj_i, double Xjp1_i, double Xjm1_i, double Xj_ip1, double Xj_im1, double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
 		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn);
 
 	//Derivatives
-	void MembraneMTDerivative(unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
-		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn, BoundaryEnum::Boundary boundary, SpeciesEnum::Species species, void (*Assign)(Tt));
+	void MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1_i, long j_ip1, long j_im1, long pot_j_i, long pot_jp1_i, long pot_jm1_i, long pot_j_ip1, long pot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn, BoundaryEnum::Boundary boundary, SpeciesEnum::Species species, void (solver::*Assign)(Tt));
 
-	void SolutionMTDerivative(unsigned long i, unsigned long j, unsigned long j_i, unsigned long jp1_i, unsigned long jm1_i, unsigned long j_ip1, unsigned long j_im1,
-		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn, BoundaryEnum::Boundary boundary, SpeciesEnum::Species species, void(*Assign)(Tt));
+	void SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1_i, long j_ip1, long j_im1, long pot_j_i, long pot_jp1_i, long pot_jm1_i, long pot_j_ip1, long pot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const Eigen::MatrixXd& Cn, BoundaryEnum::Boundary boundary, SpeciesEnum::Species species, void(solver::*Assign)(Tt));
 
-	double BulkPotEquation(unsigned long i, unsigned long j,
-		double Xrea_j_i, double Xpro_j_i, double Xani_j_i, double Xcat_j_i,
-		double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
+	double BulkPotEquation(long i, long j, double Xrea_j_i, double Xpro_j_i, double Xani_j_i, double Xcat_j_i, double Xpot_j_i, double Xpot_jp1_i, double Xpot_jm1_i, double Xpot_j_ip1, double Xpot_j_im1,
 		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I);
 
-	void SolutionPotDerivative(unsigned long i, unsigned long j, unsigned long rea_j_i, unsigned long pro_j_i, unsigned long ani_j_i, unsigned long cat_j_i,
-		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, BoundaryEnum::Boundary boundary, void(*Assign)(Tt));
+	void SolutionPotDerivative(long i, long j, long rea_j_i, long pro_j_i, long ani_j_i, long cat_j_i, long pot_j_i, long pot_jp1_i, long pot_jm1_i, long pot_j_ip1, long pot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, BoundaryEnum::Boundary boundary, void(solver::*Assign)(Tt));
 
-	void MembranePotDerivative(unsigned long i, unsigned long j, unsigned long rea_j_i, unsigned long pro_j_i, unsigned long cat_j_i,
-		unsigned long pot_j_i, unsigned long pot_jp1_i, unsigned long pot_jm1_i, unsigned long pot_j_ip1, unsigned long pot_j_im1,
-		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, BoundaryEnum::Boundary boundary, void(*Assign)(Tt));
+	void MembranePotDerivative(long i, long j, long rea_j_i, long pro_j_i, long cat_j_i, long pot_j_i, long pot_jp1_i, long pot_jm1_i, long pot_j_ip1, long pot_j_im1,
+		const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, BoundaryEnum::Boundary boundary, void(solver::*Assign)(Tt));
 
-	void initialiseMatrixA(void(*Assign)(Tt));
+	void initialiseMatrixA(void(solver::*Assign)(Tt));
 
 	void UpdateMatrixA();
 
@@ -82,7 +75,7 @@ private:
 	const ElectrodeReaction& ElecR;
 	const IonSystem& membraneIons;
 	const IonSystem& solutionIons;
-	const unsigned long MatrixLen;
+	const long MatrixLen;
 	const InterfaceReaction& CationTransR;
 	const InterfaceReaction& ProductTransR;
 	const InterfaceReaction& ReactantTransR;
@@ -92,7 +85,7 @@ private:
 	vector<Tt> MatrixAlist;
 
 	omp_lock_t writeLock;
-	unsigned long MatrixAAssignIndex;
+	long MatrixAAssignIndex;
 
 	
 };

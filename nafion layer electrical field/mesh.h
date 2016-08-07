@@ -19,13 +19,13 @@ public:
 	// Export the concentrations
 	void PrintConcentration(string target_concentration_name, string ex_file_name);
 
-	const vector<unsigned long> GetMeshSize() const;
+	const vector<long> GetMeshSize() const;
 
-	const unsigned long Getmxn() const {return m*n;}
+	const long Getmxn() const {return m*n;}
 
-	const unsigned long m; // r axis node number
+	const long m; // r axis node number
 
-	const unsigned long n; // z axis node number
+	const long n; // z axis node number
 
 private:
 	// define x and y interval

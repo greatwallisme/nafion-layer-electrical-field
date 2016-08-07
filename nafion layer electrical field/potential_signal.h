@@ -33,7 +33,7 @@ public:
 private:
 	const int swf; // the frequency of square wave potential, Hz
 	const double swamp; // the amplitude of square wave potential, V
-	const unsigned long q; // number of time nodes
+	const long q; // number of time nodes
 	double Eqm; // the base potential
 	double* Er; // recorded electrode potential container
 	double* tr; // recorded time container

@@ -13,13 +13,14 @@ public:
 	double Cinitial;
 
 	Eigen::MatrixXd DenseN; // for ions species, it stores the concentration values; for potential, it stores the potential values
-	Eigen::MatrixXd DenseO;
+
+	void PrintDense(string fileName);
 };
 
 class IonSystem
 {
 public:
-	IonSystem(double fEpsilon_r, double Epsilon_0, Ion& fReactant, Ion& fProduct, Ion& fSupportCation, Ion& fSupportAnion, Ion& fImmobileCharge = Ion(0.0, 0, 0.0), double fCImmobileCharge = 0.0);
+	IonSystem(double fEpsilon_r, double Epsilon_0, Ion& fReactant, Ion& fProduct, Ion& fSupportCation, Ion& fSupportAnion, Ion& fImmobileCharge = Ion(0.0, 0, 0.0, mesh(1, 1, 1, 1, 1, 1)), double fCImmobileCharge = 0.0);
 
 	const Ion& Reactant; // diffusion coefficient of the reactant
 	const Ion& Product; // diffusion coefficient of the product

@@ -169,7 +169,7 @@ void mesh::PrintConcentration(string target_concentration_name, string ex_file_n
 	}
 }
 
-const vector<unsigned long> mesh::GetMeshSize() const
+const vector<long> mesh::GetMeshSize() const
 {
-	return vector<unsigned long> {m, n};
+	return vector<long> {m, n};
 }

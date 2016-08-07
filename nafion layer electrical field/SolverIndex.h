@@ -8,18 +8,18 @@ class OneDIndex
 {
 public:
 	OneDIndex(const mesh& membrane, const mesh& solution);
-	unsigned long operator() (SpeciesEnum::Species species, unsigned long j, unsigned long i) const { return InnerIndex[species][i][j]; } ;// this function returns the unsigned long 1d index
+	long operator() (SpeciesEnum::Species species, long j, long i) const { return InnerIndex[species][i][j]; } ;// this function returns the long 1d index
 	
 private:
-	vector<vector<vector<unsigned long>>> InnerIndex;
+	vector<vector<vector<long>>> InnerIndex;
 };
 
 class TwoDIndex
 {
-	typedef std::tuple<SpeciesEnum::Species, unsigned long, unsigned long> triple;
+	typedef std::tuple<SpeciesEnum::Species, long, long> triple;
 public:
 	TwoDIndex(const mesh& membrane, const mesh& solution);
-	triple operator() (unsigned long OneDIndex) const { return InnerIndex[OneDIndex]; } // this function return enum species, unsigned long j, unsigned long i
+	triple operator() (long OneDIndex) const { return InnerIndex[OneDIndex]; } // this function return enum species, long j, long i
 
 private:
 	vector<triple> InnerIndex;
