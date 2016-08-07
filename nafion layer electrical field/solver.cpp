@@ -1595,24 +1595,21 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		cout << "Improper species for SolutionMTDerivative";
 		throw(ImproperSpecies());
 	}
-	double Djm1_i, Djp1_i, Dj_im1, Dj_ip1, Dj_i, Dpot_jm1_i, Dpot_jp1_i, Dpot_j_im1, Dpot_j_ip1, Dpot_j_ip1, Dpot_j_i;
-	if (j != solution.n - 1 && i != solution.m - 1)
-	{
-		Djm1_i = CA(1, j) - CA(4, j)*(X(pot_jp1_i) - X(pot_jm1_i));
-		Djp1_i = CA(2, j) + CA(4, j)*(X(pot_jp1_i) - X(pot_jm1_i));
-		Dj_im1 = CB(1, i) - CB(4, i)*(X(pot_j_ip1) - X(pot_j_im1));
-		Dj_ip1 = CB(2, i) + CB(4, i)*(X(pot_j_ip1) - X(pot_j_im1));
-		Dj_i = (CA(0, j) + CB(0, i)) + (CA(5, j)*X(pot_jp1_i) + CA(6, j)*X(pot_jm1_i) + CB(5, i)*X(pot_j_ip1) + CB(6, i)*X(pot_j_im1) + (CA(3, j) + CB(3, i))*X(pot_j_i));
-		Dpot_jm1_i = -CA(4, j)*(X(jp1_i) - X(jm1_i)) + CA(6, j)*X(j_i);
-		Dpot_jp1_i = CA(4, j)*(X(jp1_i) - X(jm1_i)) + CA(5, j)*X(j_i);
-		Dpot_j_im1 = CB(6, i)*X(j_i) - CB(4, i)*(X(j_ip1) - X(j_im1));
-		Dpot_j_ip1 = CB(5, i)*X(j_i) + CB(4, i)*(X(j_ip1) - X(j_im1));
-		Dpot_j_i = CB(3, i)*X(j_i);
-	}
-
+	
+	double Djm1_i = CA(1, j) - CA(4, j)*(X(pot_jp1_i) - X(pot_jm1_i));
+	double Djp1_i = CA(2, j) + CA(4, j)*(X(pot_jp1_i) - X(pot_jm1_i));
+	double Dj_im1 = CB(1, i) - CB(4, i)*(X(pot_j_ip1) - X(pot_j_im1));
+	double Dj_ip1 = CB(2, i) + CB(4, i)*(X(pot_j_ip1) - X(pot_j_im1));
+	double Dj_i = (CA(0, j) + CB(0, i)) + (CA(5, j)*X(pot_jp1_i) + CA(6, j)*X(pot_jm1_i) + CB(5, i)*X(pot_j_ip1) + CB(6, i)*X(pot_j_im1) + (CA(3, j) + CB(3, i))*X(pot_j_i));
+	double Dpot_jm1_i = -CA(4, j)*(X(jp1_i) - X(jm1_i)) + CA(6, j)*X(j_i);
+	double Dpot_jp1_i = CA(4, j)*(X(jp1_i) - X(jm1_i)) + CA(5, j)*X(j_i);
+	double Dpot_j_im1 = CB(6, i)*X(j_i) - CB(4, i)*(X(j_ip1) - X(j_im1));
+	double Dpot_j_ip1 = CB(5, i)*X(j_i) + CB(4, i)*(X(j_ip1) - X(j_im1));
+	double Dpot_j_i = CB(3, i)*X(j_i);
+	
 	switch (boundary)
 	{
-	case BoundaryEnum::bulk:
+	case BoundaryEnum::bulk: {
 		(this->*Assign)(Tt(j_i, jm1_i, Djm1_i));
 		(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 		(this->*Assign)(Tt(j_i, j_im1, Dj_im1));
@@ -1623,11 +1620,12 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		(this->*Assign)(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		(this->*Assign)(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i));
+	}
 		break;
-	case BoundaryEnum::bottom:
+	case BoundaryEnum::bottom: {
 		switch (species)
 		{
-		case SpeciesEnum::sReactant:
+		case SpeciesEnum::sReactant: {
 			long mrea_jm1_i = membrane.n*i + membrane.n - 1;
 			//Reactant transfer rate
 			double kf = ReactantTransR.kf(0);
@@ -1644,11 +1642,12 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
 
 			(this->*Assign)(Tt(j_i, mrea_jm1_i, kb / solution.dz*Signal.dt));
+		}
 			break;
-		case SpeciesEnum::sProduct:
+		case SpeciesEnum::sProduct: {
 			long mpro_jm1_i = membrane.n*i + membrane.n - 1 + membrane.Getmxn();
 			//Potential index
-			long mpot_jm1_i = membrane.n*i + membrane.n - 1 + 3*membrane.Getmxn();
+			long mpot_jm1_i = membrane.n*i + membrane.n - 1 + 3 * membrane.Getmxn();
 			double dE = X(pot_j_i) - X(mpot_jm1_i);
 			double kf = ProductTransR.kf(dE);
 			double kb = ProductTransR.kb(dE);
@@ -1666,9 +1665,9 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 
 			(this->*Assign)(Tt(j_i, mpot_jm1_i, trDmpot_jm1_i / solution.dz*Signal.dt));
 			(this->*Assign)(Tt(j_i, mpro_jm1_i, kb / solution.dz*Signal.dt));
-
+		}
 			break;
-		case SpeciesEnum::sAnion:
+		case SpeciesEnum::sAnion: {
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 			(this->*Assign)(Tt(j_i, j_im1, Dj_im1));
 			(this->*Assign)(Tt(j_i, j_ip1, Dj_ip1));
@@ -1677,10 +1676,11 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			(this->*Assign)(Tt(j_i, pot_j_im1, Dpot_j_im1));
 			(this->*Assign)(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 			(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
+		}
 			break;
-		case SpeciesEnum::sCation:
+		case SpeciesEnum::sCation: {
 			//Potential index
-			long mcat_jm1_i = membrane.n*i + membrane.n - 1 + 2*membrane.Getmxn();
+			long mcat_jm1_i = membrane.n*i + membrane.n - 1 + 2 * membrane.Getmxn();
 			long mpot_jm1_i = membrane.n*i + membrane.n - 1 + 3 * membrane.Getmxn();
 			double dE = X(pot_j_i) - X(mpot_jm1_i);
 			//Cation transfer rate
@@ -1699,18 +1699,22 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + trDpot_j_i / solution.dz*Signal.dt));
 
 			(this->*Assign)(Tt(j_i, mpot_jm1_i, trDmpot_jm1_i / solution.dz*Signal.dt));
-			(this->*Assign)(Tt(j_i, mpro_jm1_i, kb / solution.dz*Signal.dt));
+			(this->*Assign)(Tt(j_i, mcat_jm1_i, kb / solution.dz*Signal.dt));
+		}
 			break;
-		default:
+		default: {
 			cout << " Improper Spcecies for SolutionMTDerivative Function";
 			throw(ImproperSpecies());
+		}
 			break;
 		}
+	}
 		break;
-	case BoundaryEnum::top:
+	case BoundaryEnum::top: {
 		(this->*Assign)(Tt(j_i, j_i, 1));
+	}
 		break;
-	case BoundaryEnum::left:
+	case BoundaryEnum::left: {
 		(this->*Assign)(Tt(j_i, jm1_i, Djm1_i));
 		(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 		(this->*Assign)(Tt(j_i, j_ip1, Dj_ip1));
@@ -1719,11 +1723,13 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		(this->*Assign)(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 		(this->*Assign)(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_j_im1));
+	}
 		break;
-	case BoundaryEnum::right:
+	case BoundaryEnum::right: {
 		(this->*Assign)(Tt(j_i, j_i, 1));
+	}
 		break;
-	case BoundaryEnum::right_bottom:
+	case BoundaryEnum::right_bottom: {
 		(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 		(this->*Assign)(Tt(j_i, j_im1, Dj_im1));
 		(this->*Assign)(Tt(j_i, j_ip1, Dj_ip1));
@@ -1732,11 +1738,12 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		(this->*Assign)(Tt(j_i, pot_j_im1, Dpot_j_im1));
 		(this->*Assign)(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 		(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i));
+	}
 		break;
-	case BoundaryEnum::left_bottom_corner:
+	case BoundaryEnum::left_bottom_corner: {
 		switch (species)
 		{
-		case SpeciesEnum::sReactant:
+		case SpeciesEnum::sReactant: {
 			long mrea_jm1_i = membrane.n*i + membrane.n - 1;
 			//Reactant transfer rate
 			double kf = ReactantTransR.kf(0);
@@ -1751,8 +1758,9 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1));
 
 			(this->*Assign)(Tt(j_i, mrea_jm1_i, kb / solution.dz*Signal.dt));
+		}
 			break;
-		case SpeciesEnum::sProduct:
+		case SpeciesEnum::sProduct: {
 			long mpro_jm1_i = membrane.n*i + membrane.n - 1 + membrane.Getmxn();
 			//Potential index
 			long mpot_jm1_i = membrane.n*i + membrane.n - 1 + 3 * membrane.Getmxn();
@@ -1771,16 +1779,18 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 
 			(this->*Assign)(Tt(j_i, mpot_jm1_i, trDmpot_jm1_i / solution.dz*Signal.dt));
 			(this->*Assign)(Tt(j_i, mpro_jm1_i, kb / solution.dz*Signal.dt));
+		}
 			break;
-		case SpeciesEnum::sAnion:
+		case SpeciesEnum::sAnion: {
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 			(this->*Assign)(Tt(j_i, j_ip1, Dj_ip1));
 			(this->*Assign)(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1));
 			(this->*Assign)(Tt(j_i, pot_jp1_i, Dpot_jp1_i));
 			(this->*Assign)(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 			(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1));
+		}
 			break;
-		case SpeciesEnum::sCation:
+		case SpeciesEnum::sCation: {
 			//Potential index
 			long mcat_jm1_i = membrane.n*i + membrane.n - 1 + 2 * membrane.Getmxn();
 			long mpot_jm1_i = membrane.n*i + membrane.n - 1 + 3 * membrane.Getmxn();
@@ -1799,26 +1809,33 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1 + trDpot_j_i / solution.dz*Signal.dt));
 
 			(this->*Assign)(Tt(j_i, mpot_jm1_i, trDmpot_jm1_i / solution.dz*Signal.dt));
-			(this->*Assign)(Tt(j_i, mpro_jm1_i, kb / solution.dz*Signal.dt));
+			(this->*Assign)(Tt(j_i, mcat_jm1_i, kb / solution.dz*Signal.dt));
+		}
 			break;
-		default:
+		default: {
 			cout << " Improper Spcecies for SolutionMTDerivative Function";
 			throw(ImproperSpecies());
+		}
 			break;
 		}
+	}
 		break;
-	case BoundaryEnum::right_bottom_corner:
+	case BoundaryEnum::right_bottom_corner: {
 		(this->*Assign)(Tt(j_i, j_i, 1));
+	}
 		break;
-	case BoundaryEnum::left_upper_corner:
+	case BoundaryEnum::left_upper_corner: {
 		(this->*Assign)(Tt(j_i, j_i, 1));
+	}
 		break;
-	case BoundaryEnum::right_upper_corner:
+	case BoundaryEnum::right_upper_corner: {
 		(this->*Assign)(Tt(j_i, j_i, 1));
+	}
 		break;
-	default:
+	default: {
 		std::cout << "miss solution phase (" << i << ", " << j << ")\n";
 		throw(MissPhase());
+	}
 		break;
 	}
 }
@@ -1850,22 +1867,19 @@ inline double solver::BulkPotEquation(long i, long j, double Xrea_j_i, double Xp
 void solver:: SolutionPotDerivative(long i, long j, long rea_j_i, long pro_j_i, long ani_j_i, long cat_j_i,	long pot_j_i, long pot_jp1_i, long pot_jm1_i, long pot_j_ip1, long pot_j_im1,
 	const Eigen::MatrixXd& CA, const Eigen::MatrixXd& CB, const IonSystem& I, BoundaryEnum::Boundary boundary, void (solver::*Assign)(Tt))
 {
-	double Dpot_jm1_i, Dpot_jp1_i, Dpot_j_im1, Dpot_j_ip1, Dpot_j_i, Drea_j_i, Dpro_j_i, Dani_j_i, Dcat_j_i;
-	if (j != solution.n - 1 && i != solution.m - 1) {
-		double Dpot_jm1_i = CA(1, j);
-		double Dpot_jp1_i = CA(2, j);
-		double Dpot_j_im1 = CB(1, i);
-		double Dpot_j_ip1 = CB(2, j);
-		double Dpot_j_i = CA(0, j) + CB(0, i);
-		double Drea_j_i = I.Reactant.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-		double Dpro_j_i = I.Product.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-		double Dani_j_i = I.SupportAnion.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-		double Dcat_j_i = I.SupportCation.Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-	}
-
+	double Dpot_jm1_i = CA(1, j);
+	double Dpot_jp1_i = CA(2, j);
+	double Dpot_j_im1 = CB(1, i);
+	double Dpot_j_ip1 = CB(2, j);
+	double Dpot_j_i = CA(0, j) + CB(0, i);
+	double Drea_j_i = I.Reactant.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dpro_j_i = I.Product.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dani_j_i = I.SupportAnion.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dcat_j_i = I.SupportCation.Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	
 	switch (boundary)
 	{
-	case BoundaryEnum::bulk:
+	case BoundaryEnum::bulk: {
 		(this->*Assign)(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
@@ -1875,8 +1889,9 @@ void solver:: SolutionPotDerivative(long i, long j, long rea_j_i, long pro_j_i, 
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, ani_j_i, Dani_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::bottom:
+	case BoundaryEnum::bottom: {
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
 		(this->*Assign)(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
@@ -1885,11 +1900,13 @@ void solver:: SolutionPotDerivative(long i, long j, long rea_j_i, long pro_j_i, 
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, ani_j_i, Dani_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::top:
+	case BoundaryEnum::top: {
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, 1));
+	}
 		break;
-	case BoundaryEnum::left:
+	case BoundaryEnum::left: {
 		(this->*Assign)(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
@@ -1898,11 +1915,13 @@ void solver:: SolutionPotDerivative(long i, long j, long rea_j_i, long pro_j_i, 
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, ani_j_i, Dani_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::right:
+	case BoundaryEnum::right: {
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, 1));
+	}
 		break;
-	case BoundaryEnum::right_bottom:
+	case BoundaryEnum::right_bottom: {
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
 		(this->*Assign)(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
@@ -1911,28 +1930,34 @@ void solver:: SolutionPotDerivative(long i, long j, long rea_j_i, long pro_j_i, 
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, ani_j_i, Dani_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::left_bottom_corner:
+	case BoundaryEnum::left_bottom_corner: {
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
-		(this->*Assign)(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i +Dpot_j_im1));
+		(this->*Assign)(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1));
 		(this->*Assign)(Tt(pot_j_i, rea_j_i, Drea_j_i));
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, ani_j_i, Dani_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::right_bottom_corner:
+	case BoundaryEnum::right_bottom_corner: {
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, 1));
+	}
 		break;
-	case BoundaryEnum::left_upper_corner:
+	case BoundaryEnum::left_upper_corner: {
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, 1));
+	}
 		break;
-	case BoundaryEnum::right_upper_corner:
+	case BoundaryEnum::right_upper_corner: {
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, 1));
+	}
 		break;
-	default:
+	default: {
 		std::cout << "miss solution phase (" << i << ", " << j << ")\n";
 		throw(MissPhase());
+	}
 		break;
 	}
 }
@@ -1951,7 +1976,7 @@ void solver::MembranePotDerivative(long i, long j, long rea_j_i, long pro_j_i, l
 
 	switch (boundary)
 	{
-	case BoundaryEnum::bulk:
+	case BoundaryEnum::bulk: {
 		(this->*Assign)(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
@@ -1960,15 +1985,17 @@ void solver::MembranePotDerivative(long i, long j, long rea_j_i, long pro_j_i, l
 		(this->*Assign)(Tt(pot_j_i, rea_j_i, Drea_j_i));
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::bottom:
+	case BoundaryEnum::bottom: {
 		double Dpot_j_i = ElecR.DrivingPotentialCoeff / membrane.dz - 1;
 		double Dpot_jp1_i = -ElecR.DrivingPotentialCoeff / membrane.dz;
-		
+
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, Dpot_j_i));
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+	}
 		break;
-	case BoundaryEnum::top:
+	case BoundaryEnum::top: {
 		(this->*Assign)(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
 		(this->*Assign)(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
@@ -1976,8 +2003,9 @@ void solver::MembranePotDerivative(long i, long j, long rea_j_i, long pro_j_i, l
 		(this->*Assign)(Tt(pot_j_i, rea_j_i, Drea_j_i));
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::left:
+	case BoundaryEnum::left: {
 		(this->*Assign)(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
@@ -1985,8 +2013,9 @@ void solver::MembranePotDerivative(long i, long j, long rea_j_i, long pro_j_i, l
 		(this->*Assign)(Tt(pot_j_i, rea_j_i, Drea_j_i));
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::right:
+	case BoundaryEnum::right: {
 		(this->*Assign)(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
@@ -1994,40 +2023,46 @@ void solver::MembranePotDerivative(long i, long j, long rea_j_i, long pro_j_i, l
 		(this->*Assign)(Tt(pot_j_i, rea_j_i, Drea_j_i));
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::left_bottom_corner:
+	case BoundaryEnum::left_bottom_corner: {
 		double Dpot_j_i = ElecR.DrivingPotentialCoeff / membrane.dz - 1;
 		double Dpot_jp1_i = -ElecR.DrivingPotentialCoeff / membrane.dz;
 
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, Dpot_j_i));
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+	}
 		break;
-	case BoundaryEnum::right_bottom_corner:
+	case BoundaryEnum::right_bottom_corner: {
 		double Dpot_j_i = ElecR.DrivingPotentialCoeff / membrane.dz - 1;
 		double Dpot_jp1_i = -ElecR.DrivingPotentialCoeff / membrane.dz;
 
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, Dpot_j_i));
 		(this->*Assign)(Tt(pot_j_i, pot_jp1_i, Dpot_jp1_i));
+	}
 		break;
-	case BoundaryEnum::left_upper_corner:
+	case BoundaryEnum::left_upper_corner: {
 		(this->*Assign)(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_ip1, Dpot_j_ip1));
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_jp1_i + Dpot_j_im1));
 		(this->*Assign)(Tt(pot_j_i, rea_j_i, Drea_j_i));
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	case BoundaryEnum::right_upper_corner:
+	case BoundaryEnum::right_upper_corner: {
 		(this->*Assign)(Tt(pot_j_i, pot_jm1_i, Dpot_jm1_i));
 		(this->*Assign)(Tt(pot_j_i, pot_j_im1, Dpot_j_im1));
 		(this->*Assign)(Tt(pot_j_i, pot_j_i, Dpot_j_i + Dpot_jp1_i + Dpot_j_ip1));
 		(this->*Assign)(Tt(pot_j_i, rea_j_i, Drea_j_i));
 		(this->*Assign)(Tt(pot_j_i, pro_j_i, Dpro_j_i));
 		(this->*Assign)(Tt(pot_j_i, cat_j_i, Dcat_j_i));
+	}
 		break;
-	default:
+	default: {
 		std::cout << "miss membrane phase (" << i << ", " << j << ")\n";
 		throw(MissPhase());
+	}
 		break;
 	}
 }
