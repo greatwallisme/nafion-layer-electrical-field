@@ -22,7 +22,7 @@ void Ion::PrintDense(string fileName)
 	ofstream fout;
 	fout.open(fileName);
 
-	if (fout.is_open)
+	if (fout.is_open())
 		fout << DenseN;
 }
 

@@ -12,6 +12,7 @@ public:
 	
 private:
 	vector<vector<vector<long>>> InnerIndex;
+
 };
 
 class TwoDIndex
