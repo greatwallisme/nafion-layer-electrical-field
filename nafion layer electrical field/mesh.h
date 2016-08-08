@@ -12,12 +12,8 @@ public:
 	mesh(int fm, double fdr0, double fdr, int fn, double fdz0, double fdz);
 	~mesh();
 
-	// Pass Cren to Creo
-	void Ca2Cb(string Ca_name, string Cb_name);
 	// Export the mesh grid
 	void PrintMesh(string ex_file_name);
-	// Export the concentrations
-	void PrintConcentration(string target_concentration_name, string ex_file_name);
 
 	const vector<long> GetMeshSize() const;
 
@@ -36,16 +32,6 @@ private:
 	const double dz0; // , cm
 
 	// mesh define
-	Eigen::MatrixXd Cren;
-	Eigen::MatrixXd Creo;
-	Eigen::MatrixXd Cprn;
-	Eigen::MatrixXd Cpro;
-	Eigen::MatrixXd Cann;
-	Eigen::MatrixXd Cano;
-	Eigen::MatrixXd Ccan;
-	Eigen::MatrixXd Ccao;
-	Eigen::MatrixXd Ptln; //potential field new
-	Eigen::MatrixXd Ptlo; // potential field old
 	Eigen::MatrixXd R; // r node for plot graph
 	Eigen::MatrixXd Z; // z node for plot graph
 	Eigen::MatrixXd RR; // the r position of the centre of each box

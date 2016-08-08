@@ -65,7 +65,7 @@ double SquareWave::AppliedPotential(int i)
 	return Eq;
 }
 
-void SquareWave::RecordData()
+void SquareWave::RecordCurrent()
 {
 	Is[PeriodCounter] = Iqr[0] - Iqr[1];
 	Io[PeriodCounter] = Iqr[0];
@@ -73,17 +73,15 @@ void SquareWave::RecordData()
 	std::cout << Er[PeriodCounter] << "V " << Is[PeriodCounter] << "A\n ";
 }
 
-void SquareWave::SavePeakConcentration(mesh& membrane, mesh& solution) const
+bool SquareWave::IsPeak() const
 {
-	if (Is[PeriodCounter - 1] > Is[PeriodCounter] && Is[PeriodCounter - 1] > Is[PeriodCounter - 2]) {
-		membrane.print_concentration("Creo", "membrane_reduced_speices_concentration@peak");
-		membrane.print_concentration("Cpro", "membrane_oxidised_speices_concentration@peak");
-		solution.print_concentration("Creo", "solution_reduced_speices_concentration@peak");
-		solution.print_concentration("Cpro", "solution_oxidised_speices_concentration@peak");
-	}
+	if (Is[PeriodCounter - 1] > Is[PeriodCounter] && Is[PeriodCounter - 1] > Is[PeriodCounter - 2])
+		return true;
+	else
+		return false;
 }
 
-void SquareWave::SaveCurrent() const
+void SquareWave::ExportCurrent() const
 {
 	std::ofstream fcout("current.txt");
 

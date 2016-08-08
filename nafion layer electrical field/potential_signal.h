@@ -26,9 +26,9 @@ public:
 	SquareWave(double fE0, double fEend, double fdE, double fdt, int fswf, double fswamp);
 	virtual ~SquareWave();
 	virtual double AppliedPotential(int i);
-	virtual void RecordData();
-	virtual void SavePeakConcentration(mesh& membrane, mesh& solution) const;
-	virtual void SaveCurrent() const;
+	virtual void RecordCurrent();
+	virtual bool IsPeak() const;
+	virtual void ExportCurrent() const;
 
 private:
 	const int swf; // the frequency of square wave potential, Hz
