@@ -4,7 +4,7 @@
 #include "Errors.h"
 #include <Eigen/SparseCholesky>
 
-solver::solver(mesh& fmembrane, mesh& fsolution, const IonSystem& fmembraneIons, const IonSystem& fsolutionIons, 
+solver::solver(mesh& fmembrane, mesh& fsolution, IonSystem& fmembraneIons, IonSystem& fsolutionIons, 
 	PotentialSignal& fSignal, const nernst_equation& fThermo, const ElectrodeReaction& fElecR, 
 	const InterfaceReaction& fCationTransR, const InterfaceReaction& fProductTransR, const InterfaceReaction& fReactantTransR) :
 	membrane(fmembrane), solution(fsolution), membraneIons(fmembraneIons), solutionIons(fsolutionIons), Signal(fSignal), Thermo(fThermo), 
@@ -83,6 +83,7 @@ void solver::solve()
 		UpdateMatrixA();
 	} while ((dX.array() / X.array()).maxCoeff() > 0.001);
 
+	SaveDensity();
 }
 
 void solver::GeoCoefficientA(mesh& phase, Eigen::MatrixXd& GeoCoeffA) const
@@ -2080,4 +2081,59 @@ inline void solver::LockedIndexAssign(Tt triplet)
 	long index = MatrixAAssignIndex++;
 	omp_unset_lock(&writeLock);
 	MatrixAlist[index] = triplet;
+}
+
+void solver::SaveDensity()
+{
+	const auto& index = Index1d;
+	const auto& x = X;
+
+	auto SD = [&index, &x](SpeciesEnum::Species species, Eigen::MatrixXd& DensityN, const long m, const long n) {
+#pragma omp parallel for
+		for (long i = 0; i < m; ++i) {
+			for (long j = 0; j < n; ++j) {
+				DensityN(j, i) = x(index(species, j, i));
+			}
+		}
+	};
+	// membrane
+	// mReactant
+	SD(SpeciesEnum::mReactant, membraneIons.Reactant.DensityN, membrane.m, membrane.n);
+	// mProduct
+	SD(SpeciesEnum::mProduct, membraneIons.Product.DensityN, membrane.m, membrane.n);
+	// mCation
+	SD(SpeciesEnum::mCation, membraneIons.SupportCation.DensityN, membrane.m, membrane.n);
+	// mPotential
+	SD(SpeciesEnum::mPotential, membraneIons.Potential.DensityN, membrane.m, membrane.n);
+
+	// solution
+	// sReactant
+	SD(SpeciesEnum::sReactant, solutionIons.Reactant.DensityN, solution.m, solution.n);
+	// sProduct
+	SD(SpeciesEnum::sProduct, solutionIons.Product.DensityN, solution.m, solution.n);
+	// sCation
+	SD(SpeciesEnum::sCation, solutionIons.SupportCation.DensityN, solution.m, solution.n);
+	// sAnion
+	SD(SpeciesEnum::sAnion, solutionIons.SupportAnion.DensityN, solution.m, solution.n);
+	// sPotential
+	SD(SpeciesEnum::sPotential, solutionIons.Potential.DensityN, solution.m, solution.n);
+}
+
+double solver::FaradaicCurrent() const
+{
+	double DrivingPotential(0.0), kf(0.0), kb(0.0), reactionRate(0.0), I(0.0);
+
+#pragma omp parallel for private(DrivingPotential, kf, kb, reactionRate) reduction(+ : I)
+	for (long i = 0; i < membrane.m; ++i) {
+		DrivingPotential = ElecR.DrivingPotential((membraneIons.Potential.DensityN(1, i) - membraneIons.Potential.DensityN(0, i)) / membrane.dz);
+		kf = ElecR.kf(DrivingPotential);
+		kb = ElecR.kb(DrivingPotential);
+		reactionRate = kf*membraneIons.Product.DensityN(0, i) - kb*membraneIons.Reactant.DensityN(0, i);
+
+		I += reactionRate*membrane.RR(0, i);
+	}
+
+	I *= 6.28*(membraneIons.Reactant.Z - membraneIons.Product.Z)*Thermo.F / 1000 * membrane.dr;
+	
+	return I;
 }

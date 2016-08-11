@@ -9,7 +9,7 @@ class mesh
 {
 	friend class solver;
 public:
-	mesh(int fm, double fdr0, double fdr, int fn, double fdz0, double fdz);
+	mesh(int fm, double fdr, int fn, double fdz);
 	~mesh();
 
 	// Export the mesh grid
@@ -25,11 +25,9 @@ public:
 
 private:
 	// define x and y interval
-	
-	const double dr0; // , cm
 	const double dr; // , cm
 	const double dz; // , cm
-	const double dz0; // , cm
+	
 
 	// mesh define
 	Eigen::MatrixXd R; // r node for plot graph

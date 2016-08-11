@@ -4,10 +4,17 @@
 #include <stdlib.h>
 #include <cmath>
 
-mesh::mesh(int fm, double fdr0, double fdr, int fn, double fdz0, double fdz) :
-	m(fm), dr0(fdr0), dr(fdr), n(fn), dz0(fdz0), dz(fdz), R(n, m), RR(n, m), Z(n, m), ZZ(n, m)
+mesh::mesh(int fm, double fdr, int fn, double fdz) :
+	m(fm), dr(fdr), n(fn), dz(fdz), R(n, m), RR(n, m), Z(n, m), ZZ(n, m)
 {
-	
+	for (long i = 0; i < m; ++i) {
+		for (long j = 0; j < n; ++j) {
+			R(j, i) = i*dr;
+			Z(j, i) = j*dz;
+			RR(j, i) = R(j, i) + 0.5*dr;
+			ZZ(j, i) = Z(j, i) + 0.5*dz;
+		}
+	}
 }
 
 mesh::~mesh()
@@ -36,10 +43,8 @@ void mesh::PrintMesh(string ex_file_name)
 	}
 
 	myfile3 << "number of R nodes: " << m
-		<< "\ndr0, cm: " << dr0
 		<< "\ndr, cm: " << dr
 		<< "number of z nodes: " << n
-		<< "\ndz0, cm: " << dz0
 		<< "\ndz, cm: " << dz;
 }
 

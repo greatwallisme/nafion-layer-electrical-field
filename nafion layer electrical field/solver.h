@@ -16,7 +16,7 @@ class solver
 {
 public:
 	solver(mesh& fmembrane, mesh& fsolution,
-		const IonSystem& fmembraneIons, const IonSystem& fsolutionIons,
+		IonSystem& fmembraneIons, IonSystem& fsolutionIons,
 		PotentialSignal& fSignal,
 		const nernst_equation& fThermo,
 		const ElectrodeReaction& fElecR,
@@ -25,6 +25,7 @@ public:
 		const InterfaceReaction& fReactantTransR);
 	void initialise();
 	void solve();
+	double FaradaicCurrent() const;
 
 private:
 	SpMatrixXd MatrixA; // Ax = b for Fc, each element inside is initialised as 0
@@ -68,13 +69,19 @@ private:
 	void LockedPushBack(Tt triplet);
 	void LockedIndexAssign(Tt triplet);
 
+	void SaveDensity();
+
+	
+
+	double NonFaradaicCurrent() const;
+
 	mesh& membrane;
 	mesh& solution;
 	PotentialSignal& Signal;
 	const nernst_equation& Thermo;
 	const ElectrodeReaction& ElecR;
-	const IonSystem& membraneIons;
-	const IonSystem& solutionIons;
+	IonSystem& membraneIons;
+	IonSystem& solutionIons;
 	const long MatrixLen;
 	const InterfaceReaction& CationTransR;
 	const InterfaceReaction& ProductTransR;
