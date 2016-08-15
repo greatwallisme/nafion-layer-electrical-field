@@ -3,7 +3,6 @@
 #include <Eigen/Dense>
 #include <vector>
 
-using namespace std;
 
 class mesh
 {
@@ -13,9 +12,9 @@ public:
 	~mesh();
 
 	// Export the mesh grid
-	void PrintMesh(string ex_file_name);
+	void PrintMesh(std::string ex_file_name);
 
-	const vector<long> GetMeshSize() const;
+	const std::vector<long> GetMeshSize() const;
 
 	const long Getmxn() const {return m*n;}
 

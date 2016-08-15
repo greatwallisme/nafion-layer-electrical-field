@@ -73,7 +73,7 @@ private:
 
 	
 
-	double NonFaradaicCurrent() const;
+	//double NonFaradaicCurrent() const;
 
 	mesh& membrane;
 	mesh& solution;
@@ -87,9 +87,9 @@ private:
 	const InterfaceReaction& ProductTransR;
 	const InterfaceReaction& ReactantTransR;
 
-	const OneDIndex& Index1d;
-	const TwoDIndex& Index2d;
-	vector<Tt> MatrixAlist;
+	const OneDIndex Index1d;
+	const TwoDIndex Index2d;
+	std::vector<Tt> MatrixAlist;
 
 	omp_lock_t writeLock;
 	long MatrixAAssignIndex;

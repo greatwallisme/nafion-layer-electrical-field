@@ -11,7 +11,7 @@ public:
 	long operator() (SpeciesEnum::Species species, long j, long i) const { return InnerIndex[species][i][j]; } ;// this function returns the long 1d index
 	
 private:
-	vector<vector<vector<long>>> InnerIndex;
+	std::vector<std::vector<std::vector<long>>> InnerIndex;
 
 };
 
@@ -23,6 +23,6 @@ public:
 	triple operator() (long OneDIndex) const { return InnerIndex[OneDIndex]; } // this function return enum species, long j, long i
 
 private:
-	vector<triple> InnerIndex;
+	std::vector<triple> InnerIndex;
 
 };

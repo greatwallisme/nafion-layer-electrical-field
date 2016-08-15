@@ -3,10 +3,10 @@
 #include <iostream>
 #include <fstream>
 SquareWave::SquareWave(double fE0, double fEend, double fdE, double fdt, int fswf, double fswamp) :
-	PotentialSignal(fE0, fEend, fdE, fdt), swf(fswf), swamp(fswamp), q(int(ceil((fEend -fE0) / (fswf*fdE*fdt)))), PeriodCounter(0)
+	PotentialSignal(fE0, fEend, fdE, fdt), swf(fswf), swamp(fswamp), q(static_cast<long>(ceil((fEend -fE0 + fdE) / (fswf*fdE*fdt))) + 1), PeriodCounter(0)
 {
 	Eqm = E0;
-	int RcdSize = int(ceil(q*dt*swf) + 5);
+	long RcdSize = long(ceil(q*dt*swf) + 5);
 	Er = new double[RcdSize]; // recorded electrode potential container
 	tr = new double[RcdSize]; // recorded time container
 	Is = new double[RcdSize]; // recorded square wave current container
@@ -25,11 +25,10 @@ SquareWave::~SquareWave()
 	delete lastIo;
 }
 
-double SquareWave::AppliedPotential(int i)
+double SquareWave::AppliedPotential(long i)
 {
 	double tq = (i - 1)*dt; // current time
 	double tq1 = i*dt; // next time
-	double Eq; // applied potential
 
 			   // define the potential vs time
 			   // square wave voltammetry
@@ -65,12 +64,19 @@ double SquareWave::AppliedPotential(int i)
 	return Eq;
 }
 
-void SquareWave::RecordCurrent()
+void SquareWave::RecordCurrent(double I)
 {
-	Is[PeriodCounter] = Iqr[0] - Iqr[1];
-	Io[PeriodCounter] = Iqr[0];
-	Er[PeriodCounter] = Eqm;
-	std::cout << Er[PeriodCounter] << "V " << Is[PeriodCounter] << "A\n ";
+	if (WaveJudge == 1 && WaveJudge1 == -1) {
+		Iqr[0] = I;
+	}
+	else if (WaveJudge == -1 && WaveJudge1 == 1) {
+		Iqr[1] = I;
+		Is[PeriodCounter] = Iqr[0] - Iqr[1];
+		Io[PeriodCounter] = Iqr[0];
+		Er[PeriodCounter] = Eqm;
+		std::cout << Er[PeriodCounter] << "V " << Is[PeriodCounter] << "A\n ";
+		++PeriodCounter;
+	}
 }
 
 bool SquareWave::IsPeak() const
@@ -95,7 +101,7 @@ void SquareWave::ExportCurrent() const
 
 		fcout << "\npotential/V " << "SWV_Current/A " << "Ox_Current/A\n";
 
-		for (int i = 0; i < PeriodCounter + 1; ++i) {
+		for (int i = 0; i < PeriodCounter; ++i) {
 			fcout << Er[i] << " " << Is[i] << " " << Io[i] << "\n";
 		}
 	}

@@ -18,9 +18,9 @@ Ion::Ion(double fD, int fZ, double fCinitial, mesh& Mesh) :
 	}
 }
 
-void Ion::PrintDense(string fileName)
+void Ion::PrintDense(std::string fileName)
 {
-	ofstream fout;
+	std::ofstream fout;
 	fout.open(fileName);
 
 	if (fout.is_open())

@@ -23,11 +23,11 @@ mesh::~mesh()
 }
 
 
-void mesh::PrintMesh(string ex_file_name)
+void mesh::PrintMesh(std::string ex_file_name)
 {
-	ofstream myfile1(ex_file_name + " mesh-R.txt");
-	ofstream myfile2(ex_file_name + " mesh-Z.txt");
-	ofstream myfile3(ex_file_name + " mesh parameters.txt");
+	std::ofstream myfile1(ex_file_name + " mesh-R.txt");
+	std::ofstream myfile2(ex_file_name + " mesh-Z.txt");
+	std::ofstream myfile3(ex_file_name + " mesh parameters.txt");
 
 	if (myfile1.is_open() && myfile2.is_open()) {
 
@@ -38,18 +38,18 @@ void mesh::PrintMesh(string ex_file_name)
 		myfile2.close();
 	}
 	else {
-		cout << " unable to open mesh data file" << endl;
+		std::cout << " unable to open mesh data file" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
 	myfile3 << "number of R nodes: " << m
 		<< "\ndr, cm: " << dr
-		<< "number of z nodes: " << n
+		<< "\nnumber of z nodes: " << n
 		<< "\ndz, cm: " << dz;
 }
 
 
-const vector<long> mesh::GetMeshSize() const
+const std::vector<long> mesh::GetMeshSize() const
 {
-	return vector<long> {m, n};
+	return std::vector<long> {m, n};
 }

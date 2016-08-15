@@ -28,7 +28,7 @@ private:
 	const double T; // temperature, K
 	double phi;
 	double ReciprocalThermConst;
-	const double k0; // standard rate constant
+	const double k0; // standard rate constant, cm s^-1
 };
 
 class ElectrodeReaction
