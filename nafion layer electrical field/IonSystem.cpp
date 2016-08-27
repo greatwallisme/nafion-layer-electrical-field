@@ -1,11 +1,17 @@
 #include "IonSystem.h"
 #include <fstream>
 
-IonSystem::IonSystem(double fEpsilon_r, double fEpsilon_0, Ion& fReactant, Ion& fProduct, Ion& fSupportCation, Ion& fSupportAnion, Ion& fPotential, Ion& fImmobileCharge) :
+/*IonSystem::IonSystem(double fEpsilon_r, double fEpsilon_0, Ion& fReactant, Ion& fProduct, Ion& fSupportCation, Ion& fSupportAnion, Ion& fPotential, Ion& fImmobileCharge) :
 	Reactant(fReactant), Product(fProduct), SupportCation(fSupportCation), SupportAnion(fSupportAnion), ImmobileCharge(fImmobileCharge), Potential(fPotential),
 	Epsilon_r(fEpsilon_r), Epsilon_0(fEpsilon_0), ReciprocalEpsilon_rEpsilon_0(1/fEpsilon_0/fEpsilon_r), CxZImmobileCharge(ImmobileCharge.DensityN(0, 0) *ImmobileCharge.Z)
 {
 
+}*/
+
+IonSystem::IonSystem(double fEpsilon_r, double fEpsilon_0, std::map<SpeciesEnum::Species, Ion*>& fIons, Ion& fPotential, Ion& fImmobileCharge) :
+Epsilon_r(fEpsilon_r), Epsilon_0(fEpsilon_0), Ions(fIons), Potential(fPotential), ImmobileCharge(fImmobileCharge), ReciprocalEpsilon_rEpsilon_0(1 / fEpsilon_0 / fEpsilon_r), 
+CxZImmobileCharge(fImmobileCharge.DensityN(0, 0) *fImmobileCharge.Z), IonNum(static_cast<int>(fIons.size()))
+{
 }
 
 Ion::Ion(double fD, int fZ, double fCinitial, mesh& Mesh) :

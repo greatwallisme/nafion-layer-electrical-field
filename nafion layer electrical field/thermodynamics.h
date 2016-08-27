@@ -1,6 +1,7 @@
 #ifndef THERMODYNAMICS_H_INCLUDED
 #define THERMODYNAMICS_H_INCLUDED
 #include <cmath>
+#include <iostream>
 
 class nernst_equation{
 	friend class ElectrodeReaction;
@@ -16,8 +17,8 @@ public:
 	const double F_R_T; // F/(RT)
 	const double nF_R_T; // nF/(RT)
 	const double minusAlfaNF_R_T; // -alfa*nF/(RT)
-	const double AlfaMinusOneNF_R_T; // (1-alfa)*nF/(RT)
-	double ratio_ox2red(double E); 	// calculate the Red concentration under thermodynamic equilibarium
+	const double OneMinusAlfaNF_R_T; // (1-alfa)*nF/(RT)
+	double ratio_ox2red(double E) const; 	// calculate the Red concentration under thermodynamic equilibarium
 									// E: the potential subjected to the reaction
 									// C_total: the total concentration of the redox pair
 	double DrivingPotential(double K); // return the driving potential of the reaction
@@ -35,14 +36,16 @@ class ElectrodeReaction
 {
 public:
 	ElectrodeReaction(double fEpsilon_d, double fEpsilon_oc, double fEpsilon_ic, double fmu_i, double fmu, nernst_equation& fInnerThermo);
-	double DrivingPotential(double gradPhi_OHP) const { return DrivingPotentialCoeff*gradPhi_OHP - InnerThermo.E_formal; }
+	double DrivingPotential(double AppliedPotential, double gradPhi_OHP) const { return  DrivingPotentialCoeff*gradPhi_OHP - InnerThermo.E_formal + AppliedPotential; }
 	double kf(double drivingPotnetial) const { return InnerThermo.k0*exp(InnerThermo.minusAlfaNF_R_T*drivingPotnetial); }; // forward reaction rate
-	double kb(double drivingPotential) const { return InnerThermo.k0*exp(InnerThermo.AlfaMinusOneNF_R_T*drivingPotential); }; // backward reaction rate
-
+	double kb(double drivingPotential) const { return InnerThermo.k0*exp(InnerThermo.OneMinusAlfaNF_R_T*drivingPotential); }; // backward reaction rate
+	double ratio_ox2red(double E) const { return InnerThermo.ratio_ox2red(E); } 	// calculate the Red concentration under thermodynamic equilibarium
+									// E: the potential subjected to the reaction
+									// C_total: the total concentration of the redox pair
 	const double DrivingPotentialCoeff; // Electrode potential minus Phi_OHP
 	const double nF_R_T; // nF/(RT)
 	const double minusAlfaNF_R_T; // -alfa*nF/(RT)
-	const double AlfaMinusOneNF_R_T; // (1-alfa)*nF/(RT)
+	const double OneMinusAlfaNF_R_T; // (1-alfa)*nF/(RT)
 	const double E_formal; // standard potential, V
 
 private:
@@ -62,12 +65,12 @@ class InterfaceReaction
 public:
 	InterfaceReaction(nernst_equation& fInnerThermo);
 	double kf(double dE) const { return InnerThermo.k0*exp(InnerThermo.minusAlfaNF_R_T*(dE - InnerThermo.E_formal)); } // dE is the potential difference between the membrane and the solution phase
-	double kb(double dE) const { return InnerThermo.k0*exp(InnerThermo.AlfaMinusOneNF_R_T*(dE - InnerThermo.E_formal)); };
+	double kb(double dE) const { return InnerThermo.k0*exp(InnerThermo.OneMinusAlfaNF_R_T*(dE - InnerThermo.E_formal)); };
 	double EqulibriumPotential(double C_solution, double C_membrane) const { return  InnerThermo.E_formal + log(C_solution / C_membrane) / InnerThermo.nF_R_T; }
 
 	const double nF_R_T; // nF/(RT)
 	const double minusAlfaNF_R_T; // -alfa*nF/(RT)
-	const double AlfaMinusOneNF_R_T; // (1-alfa)*nF/(RT)
+	const double OneMinusAlfaNF_R_T; // (1-alfa)*nF/(RT)
 
 private:
 

@@ -1,6 +1,7 @@
 #include "solver.h"
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include "Errors.h"
 #include <Eigen/SparseCholesky>
 
@@ -70,21 +71,42 @@ void solver::solve()
 	2. F'(Xn)dX = -F(Xn)
 	3. Xn+1 = Xn + dX
 	*/
-
+	Eigen::SparseLU<SpMatrixXd> dXSolver;
 	do {
 		CalculateF();
-		Eigen::SimplicialLLT<SpMatrixXd> dXSolver;
-		dXSolver.compute(MatrixA);
+		dXSolver.analyzePattern(MatrixA);
+		dXSolver.factorize(MatrixA);
 		if (dXSolver.info() != Eigen::Success) {
 			// decomposition failed
-			std::cout << "Decomposition of MatrixA Failed";
+			std::cout << "Decomposition of MatrixA Failed" << std::endl;
+			std::ofstream fout;
+			fout.open("errorX.txt");
+			fout << X;
+			fout.close();
+			fout.open("errorF.txt");
+			fout << F;
+			fout.close();
+			membraneIons[SpeciesEnum::mReactant].PrintDense("error mReactant Concentration.txt");
+			membraneIons[SpeciesEnum::mProduct].PrintDense("error mProduct Concentration.txt");
+			membraneIons[SpeciesEnum::mCation].PrintDense("error mCation Concentration.txt");
+			membraneIons.Potential.PrintDense("error mPotential Concentration.txt");
+			solutionIons[SpeciesEnum::sReactant].PrintDense("error sReactant Concentration.txt");
+			solutionIons[SpeciesEnum::sProduct].PrintDense("error sProduct Concentration.txt");
+			solutionIons[SpeciesEnum::sCation].PrintDense("error sCation Concentration.txt");
+			solutionIons[SpeciesEnum::sAnion].PrintDense("error sAnion Concentration.txt");
+			solutionIons.Potential.PrintDense("error sPotential Concentration.txt");
+			std::cout << dXSolver.info() << std::endl;
 			throw(DecompositionFailed());
 		}
 		dX = dXSolver.solve(-F);
 		X = X + dX;
+		if (dXSolver.info() != Eigen::Success) {
+			// Solving failed
+			std::cout << "Solving of derivative matrix Failed" << std::endl;
+			throw(SolvingFailed());
+		}
 		UpdateMatrixA();
-	} while ((dX.array() / X.array()).maxCoeff() > 0.001);
-
+	} while ((dX.array()).abs().maxCoeff() > 1e-6);
 	SaveDensity();
 }
 
@@ -149,13 +171,11 @@ void solver::initialiseX()
 	for (long i = 0; i < membrane.m; ++i) {
 		for (long j = 0; j < membrane.n; ++j) {
 			//Reactant
-			X(Index1d(SpeciesEnum::mReactant, j, i));
-
-			X(Index1d(SpeciesEnum::mReactant, j, i)) = membraneIons.Reactant.DensityN(j, i);
+			X(Index1d(SpeciesEnum::mReactant, j, i)) = membraneIons[SpeciesEnum::mReactant].DensityN(j, i);
 			//Product
-			X(Index1d(SpeciesEnum::mProduct, j, i)) = membraneIons.Product.DensityN(j, i);
+			X(Index1d(SpeciesEnum::mProduct, j, i)) = membraneIons[SpeciesEnum::mProduct].DensityN(j, i);
 			//Cation
-			X(Index1d(SpeciesEnum::mCation, j, i)) = membraneIons.SupportCation.DensityN(j, i);
+			X(Index1d(SpeciesEnum::mCation, j, i)) = membraneIons[SpeciesEnum::mCation].DensityN(j, i);
 			//Potential
 			X(Index1d(SpeciesEnum::mPotential, j, i)) = membraneIons.Potential.DensityN(j, i);
 		}
@@ -165,13 +185,13 @@ void solver::initialiseX()
 	for (long i = 0; i < solution.m; ++i) {
 		for (long j = 0; j < solution.n; ++j) {
 			//Reactant
-			X(Index1d(SpeciesEnum::sReactant, j, i)) = solutionIons.Reactant.DensityN(j, i);
+			X(Index1d(SpeciesEnum::sReactant, j, i)) = solutionIons[SpeciesEnum::sReactant].DensityN(j, i);
 			//Product
-			X(Index1d(SpeciesEnum::sProduct, j, i)) = solutionIons.Product.DensityN(j, i);
+			X(Index1d(SpeciesEnum::sProduct, j, i)) = solutionIons[SpeciesEnum::sProduct].DensityN(j, i);
 			//Anion
-			X(Index1d(SpeciesEnum::sAnion, j, i)) = solutionIons.SupportAnion.DensityN(j, i);
+			X(Index1d(SpeciesEnum::sAnion, j, i)) = solutionIons[SpeciesEnum::sAnion].DensityN(j, i);
 			//Cation
-			X(Index1d(SpeciesEnum::sCation, j, i)) = solutionIons.SupportCation.DensityN(j, i);
+			X(Index1d(SpeciesEnum::sCation, j, i)) = solutionIons[SpeciesEnum::sCation].DensityN(j, i);
 			//Potential
 			X(Index1d(SpeciesEnum::sPotential, j, i)) = solutionIons.Potential.DensityN(j, i);
 		}
@@ -196,95 +216,97 @@ void solver::CalculateF()
 	//Potential index
 	long pot_j_i(0UL), pot_jm1_i(0UL), pot_jp1_i(0UL), pot_j_im1(0UL), pot_j_ip1(0UL);
 
-	long mxn = membrane.Getmxn();
-
 	// Calculate membrane
 #pragma omp parallel for private(rea_j_i, rea_jm1_i, rea_jp1_i, rea_j_im1, rea_j_ip1, pro_j_i, pro_jm1_i, pro_jp1_i, pro_j_im1, pro_j_ip1, cat_j_i, cat_jm1_i, cat_jp1_i, cat_j_im1, cat_j_ip1, pot_j_i, pot_jm1_i, pot_jp1_i, pot_j_im1, pot_j_ip1)
-	for (long i = 0; i < membrane.m - 1; ++i) {
-		for (long j = 0; j < membrane.n - 1; ++j) {
-			// Reactant index
-			rea_j_i = membrane.n*i + j;
-			rea_jm1_i = rea_j_i - 1;
-			rea_jp1_i = rea_j_i + 1;
-			rea_j_im1 = rea_j_i - membrane.n;
-			rea_j_ip1 = rea_j_i + membrane.n;
-			//Product index
-			pro_j_i = rea_j_i + mxn;
-			pro_jm1_i = pro_j_i - 1;
-			pro_jp1_i = pro_j_i + 1;
-			pro_j_im1 = pro_j_i - membrane.n;
-			pro_j_ip1 = pro_j_i + membrane.n;
-			//Cation index
-			cat_j_i = ani_j_i + mxn;
-			cat_jm1_i = cat_j_i - 1;;
-			cat_jp1_i = cat_j_i + 1;
-			cat_j_im1 = cat_j_i - membrane.n;
-			cat_j_ip1 = cat_j_i + membrane.n;
-			//Potential index
-			pot_j_i = cat_j_i + mxn;
-			pot_jm1_i = pot_j_i - 1;
-			pot_jp1_i = pot_j_i + 1;
-			pot_j_im1 = pot_j_i - membrane.n;
-			pot_j_ip1 = pot_j_i + membrane.n;
+	for (long i = 0; i < membrane.m; ++i) {
+		for (long j = 0; j < membrane.n; ++j) {
 
-			if (i > 1 && j > 1 && i < membrane.m - 1 && i < membrane.n - 1) {
+			rea_j_i = Index1d(SpeciesEnum::mReactant, j, i);
+			pro_j_i = Index1d(SpeciesEnum::mProduct, j, i);
+			cat_j_i = Index1d(SpeciesEnum::mCation, j, i);
+			pot_j_i = Index1d(SpeciesEnum::mPotential, j, i);
+			if (j != 0) {
+				rea_jm1_i = Index1d(SpeciesEnum::mReactant, j - 1, i);
+				pro_jm1_i = Index1d(SpeciesEnum::mProduct, j - 1, i);
+				cat_jm1_i = Index1d(SpeciesEnum::mCation, j - 1, i);
+				pot_jm1_i = Index1d(SpeciesEnum::mPotential, j - 1, i);
+			}
+			if (j != membrane.n - 1) {
+				rea_jp1_i = Index1d(SpeciesEnum::mReactant, j + 1, i);
+				pro_jp1_i = Index1d(SpeciesEnum::mProduct, j + 1, i);
+				cat_jp1_i = Index1d(SpeciesEnum::mCation, j + 1, i);
+				pot_jp1_i = Index1d(SpeciesEnum::mPotential, j + 1, i);
+			}
+			if (i != 0) {
+				rea_j_im1 = Index1d(SpeciesEnum::mReactant, j, i - 1);
+				pro_j_im1 = Index1d(SpeciesEnum::mProduct, j, i - 1);
+				cat_j_im1 = Index1d(SpeciesEnum::mCation, j, i - 1);
+				pot_j_im1 = Index1d(SpeciesEnum::mPotential, j, i - 1);
+			}
+			if (i != membrane.m - 1) {
+				rea_j_ip1 = Index1d(SpeciesEnum::mReactant, j, i + 1);
+				pro_j_ip1 = Index1d(SpeciesEnum::mProduct, j, i + 1);
+				cat_j_ip1 = Index1d(SpeciesEnum::mCation, j, i + 1);
+				pot_j_ip1 = Index1d(SpeciesEnum::mPotential, j, i + 1);
+			}	
+
+			if (i > 0 && j > 0 && i < membrane.m - 1 && j < membrane.n - 1) {
+
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_jm1_i), X(rea_j_ip1), X(rea_j_im1), 
-							   X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons.Reactant.DensityN);
+							   X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN);
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_jm1_i), X(pro_j_ip1), X(pro_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN);
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_jm1_i), X(cat_j_ip1), X(cat_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN);
 				//Potential
-				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffPotentialA, M.CoeffPotentialB, MI);
-
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), 0, X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffPotentialA, M.CoeffPotentialB, MI);
 			}
-			else if (j == 0 && i > 1 && i < membrane.m - 1) {
-				
-				double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			else if (j == 0 && i > 0 && i < membrane.m - 1) {
+				double DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
 				double kf = ElecR.kf(DrivingPotential);
 				double kb = ElecR.kb(DrivingPotential);
 				double reactionRate = kf*X(pro_j_i) - kb*X(rea_j_i); // production is O, reatant is R
 
 				// Reactant:
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), X(rea_j_ip1), X(rea_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons.Reactant.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN);
 				F(rea_j_i) += reactionRate / membrane.dz*Signal.dt;
 				// Product:
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), X(pro_j_ip1), X(pro_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN);
 				F(pro_j_i) -= reactionRate / membrane.dz*Signal.dt;
 				// Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN);
 				// Potential
-				F(pot_j_i) = Signal.GetAppliedPotential() - X(pot_j_i) - ElecR.E_formal - DrivingPotential;
+				F(pot_j_i) = Signal.AppliedPotential - X(pot_j_i) - ElecR.E_formal - DrivingPotential;
 			}
 			else if (i == 0 && j > 0 && j < membrane.n - 1) {
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_jm1_i), X(rea_j_ip1), X(rea_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffReactantA, M.CoeffReactantB, membraneIons.Reactant.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffReactantA, M.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN);
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_jm1_i), X(pro_j_ip1), X(pro_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffProductA, M.CoeffProductB, membraneIons.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffProductA, M.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN);
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_jm1_i), X(cat_j_ip1), X(cat_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffCationA, M.CoeffCationB, membraneIons.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffCationA, M.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN);
 				//Potential
-				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffPotentialA, M.CoeffPotentialB, MI);
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), 0, X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffPotentialA, M.CoeffPotentialB, MI);
 			}
 			else if (j == membrane.n - 1 && i > 0 && i < membrane.m - 1) {
 				// index in the solution phase
 				// Reactant index
-				long srea_jp1_i = solution.n*i + 4 * membrane.Getmxn();
+				long srea_jp1_i = Index1d(SpeciesEnum::sReactant, 0, i);
 				//Product index
-				long spro_jp1_i = srea_jp1_i + mxn;
+				long spro_jp1_i = Index1d(SpeciesEnum::sProduct, 0, i);
 				//Cation index
-				long scat_jp1_i = spro_jp1_i + 2*mxn;
+				long scat_jp1_i = Index1d(SpeciesEnum::sCation, 0, i);
 				//Potential index
-				long spot_jp1_i = scat_jp1_i + mxn;
+				long spot_jp1_i = Index1d(SpeciesEnum::sPotential, 0, i);
 
 				double dE = X(spot_jp1_i) - X(pot_j_i);
 				//Cation transfer rate
@@ -302,18 +324,18 @@ void solver::CalculateF()
 
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_j_i), X(rea_jm1_i), X(rea_j_ip1), X(rea_j_im1),
-					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons.Reactant.DensityN);
+					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN);
 				F(rea_j_i) += ReactantTransRate / membrane.dz*Signal.dt;
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_j_i), X(pro_jm1_i), X(pro_j_ip1), X(pro_j_im1),
-					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons.Product.DensityN);
+					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN);
 				F(pro_j_i) += ProductTransRate / membrane.dz*Signal.dt;
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_j_i), X(cat_jm1_i), X(cat_j_ip1), X(cat_j_im1),
-					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons.SupportCation.DensityN);
+					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN);
 				F(cat_j_i) += CationTransRate/membrane.dz*Signal.dt;
 				//Potential
-				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), 
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), 0, X(cat_j_i), X(pot_j_i), X(pot_jp1_i), 
 					X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffPotentialA, M.CoeffPotentialB, MI);
 
 
@@ -321,66 +343,64 @@ void solver::CalculateF()
 			else if (i == membrane.m - 1 && j > 0 && j < membrane.n - 1) {
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_jm1_i), X(rea_j_i), X(rea_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons.Reactant.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN);
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_jm1_i), X(pro_j_i), X(pro_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN);
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_jm1_i), X(cat_j_i), X(cat_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN);
 				//Potential
-				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffPotentialA, M.CoeffPotentialB, MI);
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), 0, X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffPotentialA, M.CoeffPotentialB, MI);
 			}
 			else if (i == 0 && j == 0) {
 				
-				double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+				double DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
 				double kf = ElecR.kf(DrivingPotential);
 				double kb = ElecR.kb(DrivingPotential);
 				double reactionRate = kf*X(pro_j_i) - kb*X(rea_j_i); // production is O, reatant is R
 				// Reactant:
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), X(rea_j_ip1), X(rea_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), M.CoeffReactantA, M.CoeffReactantB, membraneIons.Reactant.DensityN);
-
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), M.CoeffReactantA, M.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN);
 				F(rea_j_i) += reactionRate / membrane.dz*Signal.dt;
 				// Product:
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), X(pro_j_ip1), X(pro_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), M.CoeffProductA, M.CoeffProductB, membraneIons.Product.DensityN);
-
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), M.CoeffProductA, M.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN);
 				F(pro_j_i) -= reactionRate / membrane.dz*Signal.dt;
 				// Cation
-				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons.SupportCation.DensityN);
+				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_i),
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), M.CoeffCationA, M.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN);
 				// Potential
-				F(pot_j_i) = Signal.GetAppliedPotential() - X(pot_j_i) - ElecR.E_formal - DrivingPotential;
+				F(pot_j_i) = Signal.AppliedPotential - X(pot_j_i) - ElecR.E_formal - DrivingPotential;
 			}
 			else if (i == membrane.m - 1 && j == 0) {
 				// Reactant:
-				double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+				double DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
 				double kf = ElecR.kf(DrivingPotential);
 				double kb = ElecR.kb(DrivingPotential);
 				double reactionRate = kf*X(pro_j_i) - kb*X(rea_j_i); // production is O, reatant is R
 
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), X(rea_j_i), X(rea_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_i), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons.Reactant.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_i), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN);
 				F(rea_j_i) += reactionRate / membrane.dz*Signal.dt;
 				// Product:
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), X(pro_j_i), X(pro_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_i), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_i), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN);
 				F(pro_j_i) -= reactionRate / membrane.dz*Signal.dt;
 				// Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_i), X(cat_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_i), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_i), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN);
 				// Potential
-				F(pot_j_i) = Signal.GetAppliedPotential() - X(pot_j_i) - ElecR.E_formal - DrivingPotential;
+				F(pot_j_i) = Signal.AppliedPotential - X(pot_j_i) - ElecR.E_formal - DrivingPotential;
 			}
 			else if (j == membrane.n - 1 && i == 0) {
-				long srea_jp1_i = solution.n*i + 4 * membrane.Getmxn();
+				long srea_jp1_i = Index1d(SpeciesEnum::sReactant, 0, i);
 				//Product index
-				long spro_jp1_i = srea_jp1_i + mxn;
+				long spro_jp1_i = Index1d(SpeciesEnum::sProduct, 0, i);
 				//Cation index
-				long scat_jp1_i = spro_jp1_i + 2*mxn;
+				long scat_jp1_i = Index1d(SpeciesEnum::sCation, 0, i);
 				//Potential index
-				long spot_jp1_i = scat_jp1_i + mxn;
+				long spot_jp1_i = Index1d(SpeciesEnum::sPotential, 0, i);
 
 				double dE = X(spot_jp1_i) - X(pot_j_i);
 				//Cation transfer rate
@@ -398,28 +418,28 @@ void solver::CalculateF()
 
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_j_i), X(rea_jm1_i), X(rea_j_ip1), X(rea_j_i),
-					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffReactantA, M.CoeffReactantB, membraneIons.Reactant.DensityN);
+					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffReactantA, M.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN);
 				F(rea_j_i) += ReactantTransRate / membrane.dz*Signal.dt;
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_j_i), X(pro_jm1_i), X(pro_j_ip1), X(pro_j_i),
-					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffProductA, M.CoeffProductB, membraneIons.Product.DensityN);
+					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffProductA, M.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN);
 				F(pro_j_i) += ProductTransRate / membrane.dz*Signal.dt;
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_j_i), X(cat_jm1_i), X(cat_j_ip1), X(cat_j_i),
-					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffCationA, M.CoeffCationB, membraneIons.SupportCation.DensityN);
+					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffCationA, M.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN);
 				F(cat_j_i) += CationTransRate / membrane.dz*Signal.dt;
 				//Potential
-				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i),
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), 0, X(cat_j_i), X(pot_j_i), X(pot_jp1_i),
 					X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), M.CoeffPotentialA, M.CoeffPotentialB, MI);
 			}
 			else if (j == membrane.n - 1 && i == membrane.m - 1) {
-				long srea_jp1_i = solution.n*i + 4 * membrane.Getmxn();
+				long srea_jp1_i = Index1d(SpeciesEnum::sReactant, 0, i);
 				//Product index
-				long spro_jp1_i = srea_jp1_i + mxn;
+				long spro_jp1_i = Index1d(SpeciesEnum::sProduct, 0, i);
 				//Cation index
-				long scat_jp1_i = spro_jp1_i + mxn;
+				long scat_jp1_i = Index1d(SpeciesEnum::sCation, 0, i);
 				//Potential index
-				long spot_jp1_i = scat_jp1_i + mxn;
+				long spot_jp1_i = Index1d(SpeciesEnum::sPotential, 0, i);
 
 				double dE = X(spot_jp1_i) - X(pot_j_i);
 				//Cation transfer rate
@@ -437,137 +457,139 @@ void solver::CalculateF()
 
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_j_i), X(rea_jm1_i), X(rea_j_i), X(rea_j_im1),
-					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons.Reactant.DensityN);
+					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffReactantA, M.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN);
 				F(rea_j_i) += ReactantTransRate / membrane.dz*Signal.dt;
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_j_i), X(pro_jm1_i), X(pro_j_i), X(pro_j_im1),
-					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons.Product.DensityN);
+					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffProductA, M.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN);
 				F(pro_j_i) += ProductTransRate / membrane.dz*Signal.dt;
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_j_i), X(cat_jm1_i), X(cat_j_i), X(cat_j_im1),
-					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons.SupportCation.DensityN);
+					X(pot_j_i), X(pot_j_i), X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffCationA, M.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN);
 				F(cat_j_i) += CationTransRate / membrane.dz*Signal.dt;
 				//Potential
-				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i),
+				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), 0, X(cat_j_i), X(pot_j_i), X(pot_jp1_i),
 					X(pot_jm1_i), X(pot_j_i), X(pot_j_im1), M.CoeffPotentialA, M.CoeffPotentialB, MI);
 			}
 		}
 	}
 
-	mxn = solution.Getmxn();
 	// Solution
 #pragma omp parallel for private(rea_j_i, rea_jm1_i, rea_jp1_i, rea_j_im1, rea_j_ip1, pro_j_i, pro_jm1_i, pro_jp1_i, pro_j_im1, pro_j_ip1, ani_j_i, ani_jm1_i, ani_jp1_i, ani_j_im1, ani_j_ip1,cat_j_i, cat_jm1_i, cat_jp1_i, cat_j_im1, cat_j_ip1, pot_j_i, pot_jm1_i, pot_jp1_i, pot_j_im1, pot_j_ip1)
-	for (long i = 0; i < solution.m - 1; ++i) {
-		for (long j = 0; j < solution.n - 1; ++j) {
+	for (long i = 0; i < solution.m; ++i) {
+		for (long j = 0; j < solution.n; ++j) {
 
-			// Reactant index
-			rea_j_i = solution.n*i + j + 4*membrane.Getmxn();
-			rea_jm1_i = rea_j_i - 1;
-			rea_jp1_i = rea_j_i + 1;
-			rea_j_im1 = rea_j_i - solution.n;
-			rea_j_ip1 = rea_j_i + solution.n;
-			//Product index
-			pro_j_i = rea_j_i + mxn;
-			pro_jm1_i = pro_j_i - 1;
-			pro_jp1_i = pro_j_i + 1;
-			pro_j_im1 = pro_j_i - solution.n;
-			pro_j_ip1 = pro_j_i + solution.n;
-			//Anion index
-			ani_j_i = pro_j_i + mxn;
-			ani_jm1_i = ani_j_i - 1;
-			ani_jp1_i = ani_j_i + 1;
-			ani_j_im1 = ani_j_i - solution.n;
-			ani_j_ip1 = ani_j_i + solution.n;
-			//Cation index
-			cat_j_i = ani_j_i + mxn;
-			cat_jm1_i = cat_j_i - 1;;
-			cat_jp1_i = cat_j_i + 1;
-			cat_j_im1 = cat_j_i - solution.n;
-			cat_j_ip1 = cat_j_i + solution.n;
-			//Potential index
-			pot_j_i = cat_j_i + mxn;
-			pot_jm1_i = pot_j_i - 1;
-			pot_jp1_i = pot_j_i + 1;
-			pot_j_im1 = pot_j_i - solution.n;
-			pot_j_ip1 = pot_j_i + solution.n;
+			rea_j_i = Index1d(SpeciesEnum::sReactant, j, i);
+			pro_j_i = Index1d(SpeciesEnum::sProduct, j, i);
+			ani_j_i = Index1d(SpeciesEnum::sAnion, j, i);
+			cat_j_i = Index1d(SpeciesEnum::sCation, j, i);
+			pot_j_i = Index1d(SpeciesEnum::sPotential, j, i);
+			if (j != 0) {
+				rea_jm1_i = Index1d(SpeciesEnum::sReactant, j - 1, i);
+				pro_jm1_i = Index1d(SpeciesEnum::sProduct, j - 1, i);
+				ani_jm1_i = Index1d(SpeciesEnum::sAnion, j - 1, i);
+				cat_jm1_i = Index1d(SpeciesEnum::sCation, j - 1, i);
+				pot_jm1_i = Index1d(SpeciesEnum::sPotential, j - 1, i);
+			}
+			if (j != solution.n - 1) {
+				rea_jp1_i = Index1d(SpeciesEnum::sReactant, j + 1, i);
+				pro_jp1_i = Index1d(SpeciesEnum::sProduct, j + 1, i);
+				ani_jp1_i = Index1d(SpeciesEnum::sAnion, j + 1, i);
+				cat_jp1_i = Index1d(SpeciesEnum::sCation, j + 1, i);
+				pot_jp1_i = Index1d(SpeciesEnum::sPotential, j + 1, i);
+			}
+			if (i != 0) {
+				rea_j_im1 = Index1d(SpeciesEnum::sReactant, j, i - 1);
+				pro_j_im1 = Index1d(SpeciesEnum::sProduct, j, i - 1);
+				ani_j_im1 = Index1d(SpeciesEnum::sAnion, j, i - 1);
+				cat_j_im1 = Index1d(SpeciesEnum::sCation, j, i - 1);
+				pot_j_im1 = Index1d(SpeciesEnum::sPotential, j, i - 1);
+			}
+			if (i != solution.m - 1) {
+				rea_j_ip1 = Index1d(SpeciesEnum::sReactant, j, i + 1);
+				pro_j_ip1 = Index1d(SpeciesEnum::sProduct, j, i + 1);
+				ani_j_ip1 = Index1d(SpeciesEnum::sAnion, j, i + 1);
+				cat_j_ip1 = Index1d(SpeciesEnum::sCation, j, i + 1);
+				pot_j_ip1 = Index1d(SpeciesEnum::sPotential, j, i + 1);
+			}
 
 			if (i > 0 && i < solution.m - 1 && j > 0 && j < solution.n - 1) {
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_jm1_i), X(rea_j_ip1), X(rea_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, SI.Reactant.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, SI[SpeciesEnum::sReactant].DensityN);
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_jm1_i), X(pro_j_ip1), X(pro_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, SI.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, SI[SpeciesEnum::sProduct].DensityN);
 				//Anion
 				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_jm1_i), X(ani_j_ip1), X(ani_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, SI.SupportAnion.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, SI[SpeciesEnum::sAnion].DensityN);
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_jm1_i), X(cat_j_ip1), X(cat_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, SI.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, SI[SpeciesEnum::sCation].DensityN);
 				//Potential
 				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
 			}
 			else if (i > 0 && i < solution.m - 1 && j == solution.n - 1) {
 				//Reactant
-				F(rea_j_i) = X(rea_j_i) - solutionIons.Reactant.Cinitial;
+				F(rea_j_i) = X(rea_j_i) - solutionIons[SpeciesEnum::sReactant].Cinitial;
 				//Product
-				F(pro_j_i) = X(pro_j_i) - solutionIons.Product.Cinitial;
+				F(pro_j_i) = X(pro_j_i) - solutionIons[SpeciesEnum::sProduct].Cinitial;
 				//Anion
-				F(ani_j_i) = X(ani_j_i) - solutionIons.SupportAnion.Cinitial;
+				F(ani_j_i) = X(ani_j_i) - solutionIons[SpeciesEnum::sAnion].Cinitial;
 				//Cation
-				F(cat_j_i) = X(cat_j_i) - solutionIons.SupportCation.Cinitial;
+				F(cat_j_i) = X(cat_j_i) - solutionIons[SpeciesEnum::sCation].Cinitial;
 				//Potential
 				F(pot_j_i) = X(pot_j_i);
 			}
 			else if (i == 0 && j > 0 && j < solution.n - 1) {
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_jm1_i), X(rea_j_ip1), X(rea_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffReactantA, S.CoeffReactantB, SI.Reactant.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffReactantA, S.CoeffReactantB, SI[SpeciesEnum::sReactant].DensityN);
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_jm1_i), X(pro_j_ip1), X(pro_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffProductA, S.CoeffProductB, SI.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffProductA, S.CoeffProductB, SI[SpeciesEnum::sProduct].DensityN);
 				//Anion
 				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_jm1_i), X(ani_j_ip1), X(ani_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffAnionA, S.CoeffAnionB, SI.SupportAnion.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffAnionA, S.CoeffAnionB, SI[SpeciesEnum::sAnion].DensityN);
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_jm1_i), X(cat_j_ip1), X(cat_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffCationA, S.CoeffCationB, SI.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffCationA, S.CoeffCationB, SI[SpeciesEnum::sCation].DensityN);
 				//Potential
 				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_jm1_i), X(pot_j_ip1), X(pot_j_i), S.CoeffPotentialA, S.CoeffPotentialB, SI);
 			}
 			else if (i == solution.m - 1 && j > 0 && j < solution.n - 1) {
 				//Reactant
-				F(rea_j_i) = X(rea_j_i) - solutionIons.Reactant.Cinitial;
+				F(rea_j_i) = X(rea_j_i) - solutionIons[SpeciesEnum::sReactant].Cinitial;
 				//Product
-				F(pro_j_i) = X(pro_j_i) - solutionIons.Product.Cinitial;
+				F(pro_j_i) = X(pro_j_i) - solutionIons[SpeciesEnum::sProduct].Cinitial;
 				//Anion
-				F(ani_j_i) = X(ani_j_i) - solutionIons.SupportAnion.Cinitial;
+				F(ani_j_i) = X(ani_j_i) - solutionIons[SpeciesEnum::sAnion].Cinitial;
 				//Cation
-				F(cat_j_i) = X(cat_j_i) - solutionIons.SupportCation.Cinitial;
+				F(cat_j_i) = X(cat_j_i) - solutionIons[SpeciesEnum::sCation].Cinitial;
 				//Potential
 				F(pot_j_i) = X(pot_j_i);
 			}
 			else if (i == 0 && j == solution.n - 1) {
 				//Reactant
-				F(rea_j_i) = X(rea_j_i) - solutionIons.Reactant.Cinitial;
+				F(rea_j_i) = X(rea_j_i) - solutionIons[SpeciesEnum::sReactant].Cinitial;
 				//Product
-				F(pro_j_i) = X(pro_j_i) - solutionIons.Product.Cinitial;
+				F(pro_j_i) = X(pro_j_i) - solutionIons[SpeciesEnum::sProduct].Cinitial;
 				//Anion
-				F(ani_j_i) = X(ani_j_i) - solutionIons.SupportAnion.Cinitial;
+				F(ani_j_i) = X(ani_j_i) - solutionIons[SpeciesEnum::sAnion].Cinitial;
 				//Cation
-				F(cat_j_i) = X(cat_j_i) - solutionIons.SupportCation.Cinitial;
+				F(cat_j_i) = X(cat_j_i) - solutionIons[SpeciesEnum::sCation].Cinitial;
 				//Potential
 				F(pot_j_i) = X(pot_j_i);
 			}
 			else if (i == solution.m - 1 && j == solution.n - 1) {
 				//Reactant
-				F(rea_j_i) = X(rea_j_i) - solutionIons.Reactant.Cinitial;
+				F(rea_j_i) = X(rea_j_i) - solutionIons[SpeciesEnum::sReactant].Cinitial;
 				//Product
-				F(pro_j_i) = X(pro_j_i) - solutionIons.Product.Cinitial;
+				F(pro_j_i) = X(pro_j_i) - solutionIons[SpeciesEnum::sProduct].Cinitial;
 				//Anion
-				F(ani_j_i) = X(ani_j_i) - solutionIons.SupportAnion.Cinitial;
+				F(ani_j_i) = X(ani_j_i) - solutionIons[SpeciesEnum::sAnion].Cinitial;
 				//Cation
-				F(cat_j_i) = X(cat_j_i) - solutionIons.SupportCation.Cinitial;
+				F(cat_j_i) = X(cat_j_i) - solutionIons[SpeciesEnum::sCation].Cinitial;
 				//Potential
 				F(pot_j_i) = X(pot_j_i);
 			}
@@ -575,13 +597,13 @@ void solver::CalculateF()
 
 				// index in the membrane phase
 				// Reactant index
-				long mrea_jm1_i = membrane.n*i + membrane.n - 1;
+				long mrea_jm1_i = Index1d(SpeciesEnum::mReactant, membrane.n - 1, i);
 				//Product index
-				long mpro_jm1_i = mrea_jm1_i + membrane.Getmxn();
+				long mpro_jm1_i = Index1d(SpeciesEnum::mProduct, membrane.n - 1, i);
 				//Cation index
-				long mcat_jm1_i = mpro_jm1_i + membrane.Getmxn();
+				long mcat_jm1_i = Index1d(SpeciesEnum::mCation, membrane.n - 1, i);
 				//Potential index
-				long mpot_jm1_i = mcat_jm1_i + membrane.Getmxn();
+				long mpot_jm1_i = Index1d(SpeciesEnum::mPotential, membrane.n - 1, i);
 
 				double dE = X(pot_j_i) - X(mpot_jm1_i);
 				//Cation transfer rate
@@ -599,18 +621,18 @@ void solver::CalculateF()
 
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), X(rea_j_ip1), X(rea_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, SI.Reactant.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, SI[SpeciesEnum::sReactant].DensityN);
 				F(rea_j_i) -= ReactantTransRate / solution.dz*Signal.dt;
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), X(pro_j_ip1), X(pro_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, SI.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, SI[SpeciesEnum::sProduct].DensityN);
 				F(pro_j_i) -= ProductTransRate / solution.dz*Signal.dt;
 				//Anion
 				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_j_i), X(ani_j_ip1), X(ani_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, SI.SupportAnion.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, SI[SpeciesEnum::sAnion].DensityN);
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, SI.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, SI[SpeciesEnum::sCation].DensityN);
 				F(cat_j_i) -= CationTransRate / solution.dz*Signal.dt;
 				//Potential
 				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
@@ -618,29 +640,29 @@ void solver::CalculateF()
 			else if (j == 0 && i > membrane.m - 1 && i < solution.m - 1) {
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), X(rea_j_ip1), X(rea_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, SI.Reactant.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffReactantA, S.CoeffReactantB, SI[SpeciesEnum::sReactant].DensityN);
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), X(pro_j_ip1), X(pro_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, SI.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffProductA, S.CoeffProductB, SI[SpeciesEnum::sProduct].DensityN);
 				//Anion
 				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_j_i), X(ani_j_ip1), X(ani_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, SI.SupportAnion.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffAnionA, S.CoeffAnionB, SI[SpeciesEnum::sAnion].DensityN);
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_im1),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, SI.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffCationA, S.CoeffCationB, SI[SpeciesEnum::sCation].DensityN);
 				//Potential
 				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_im1), S.CoeffPotentialA, S.CoeffPotentialB, SI);
 			}
 			else if (i == 0 && j == 0) {
 				// index in the membrane phase
 				// Reactant index
-				long mrea_jm1_i = membrane.n*i + membrane.n - 1;
+				long mrea_jm1_i = Index1d(SpeciesEnum::mReactant, membrane.n - 1, i);
 				//Product index
-				long mpro_jm1_i = mrea_jm1_i + membrane.Getmxn();
+				long mpro_jm1_i = Index1d(SpeciesEnum::mProduct, membrane.n - 1, i);
 				//Cation index
-				long mcat_jm1_i = mpro_jm1_i + membrane.Getmxn();
+				long mcat_jm1_i = Index1d(SpeciesEnum::mCation, membrane.n - 1, i);
 				//Potential index
-				long mpot_jm1_i = mcat_jm1_i + membrane.Getmxn();
+				long mpot_jm1_i = Index1d(SpeciesEnum::mPotential, membrane.n - 1, i);
 
 				double dE = X(pot_j_i) - X(mpot_jm1_i);
 				//Cation transfer rate
@@ -658,36 +680,34 @@ void solver::CalculateF()
 
 				//Reactant
 				F(rea_j_i) = BulkMTEquation(i, j, X(rea_j_i), X(rea_jp1_i), X(rea_j_i), X(rea_j_ip1), X(rea_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffReactantA, S.CoeffReactantB, SI.Reactant.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffReactantA, S.CoeffReactantB, SI[SpeciesEnum::sReactant].DensityN);
 				F(rea_j_i) -= ReactantTransRate / solution.dz*Signal.dt;
 				//Product
 				F(pro_j_i) = BulkMTEquation(i, j, X(pro_j_i), X(pro_jp1_i), X(pro_j_i), X(pro_j_ip1), X(pro_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffProductA, S.CoeffProductB, SI.Product.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffProductA, S.CoeffProductB, SI[SpeciesEnum::sProduct].DensityN);
 				F(pro_j_i) -= ProductTransRate / solution.dz*Signal.dt;
 				//Anion
 				F(ani_j_i) = BulkMTEquation(i, j, X(ani_j_i), X(ani_jp1_i), X(ani_j_i), X(ani_j_ip1), X(ani_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffAnionA, S.CoeffAnionB, SI.SupportAnion.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffAnionA, S.CoeffAnionB, SI[SpeciesEnum::sAnion].DensityN);
 				//Cation
 				F(cat_j_i) = BulkMTEquation(i, j, X(cat_j_i), X(cat_jp1_i), X(cat_j_i), X(cat_j_ip1), X(cat_j_i),
-					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffCationA, S.CoeffCationB, SI.SupportCation.DensityN);
+					X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffCationA, S.CoeffCationB, SI[SpeciesEnum::sCation].DensityN);
 				F(cat_j_i) -= CationTransRate / solution.dz*Signal.dt;
 				//Potential
 				F(pot_j_i) = BulkPotEquation(i, j, X(rea_j_i), X(pro_j_i), X(ani_j_i), X(cat_j_i), X(pot_j_i), X(pot_jp1_i), X(pot_j_i), X(pot_j_ip1), X(pot_j_i), S.CoeffPotentialA, S.CoeffPotentialB, SI);
 			}
 			else if (i == solution.m - 1 && j == 0) {
 				//Reactant
-				F(rea_j_i) = X(rea_j_i) - solutionIons.Reactant.Cinitial;
+				F(rea_j_i) = X(rea_j_i) - solutionIons[SpeciesEnum::sReactant].Cinitial;
 				//Product
-				F(pro_j_i) = X(pro_j_i) - solutionIons.Product.Cinitial;
+				F(pro_j_i) = X(pro_j_i) - solutionIons[SpeciesEnum::sProduct].Cinitial;
 				//Anion
-				F(ani_j_i) = X(ani_j_i) - solutionIons.SupportAnion.Cinitial;
+				F(ani_j_i) = X(ani_j_i) - solutionIons[SpeciesEnum::sAnion].Cinitial;
 				//Cation
-				F(cat_j_i) = X(cat_j_i) - solutionIons.SupportCation.Cinitial;
+				F(cat_j_i) = X(cat_j_i) - solutionIons[SpeciesEnum::sCation].Cinitial;
 				//Potential
 				F(pot_j_i) = X(pot_j_i);
 			}
-			
-			
 		}
 	}
 }
@@ -707,9 +727,9 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 	
 	omp_init_lock(&writeLock);
 	//Calculate membrane
-#pragma omp parallel for private(rea_j_i, rea_jm1_i, rea_jp1_i, rea_j_im1, rea_j_ip1, pro_j_i, pro_jm1_i, pro_jp1_i, pro_j_im1, pro_j_ip1, ani_j_i, ani_jm1_i, ani_jp1_i, ani_j_im1, ani_j_ip1, cat_j_i, cat_jm1_i, cat_jp1_i, cat_j_im1, cat_j_ip1, pot_j_i, pot_jm1_i, pot_jp1_i, pot_j_im1, pot_j_ip1)
-	for (long i = 0; i < membrane.m - 1; ++i) {
-		for (long j = 0; j < membrane.n - 1; ++j) {
+#pragma omp parallel for private(rea_j_i, rea_jm1_i, rea_jp1_i, rea_j_im1, rea_j_ip1, pro_j_i, pro_jm1_i, pro_jp1_i, pro_j_im1, pro_j_ip1, cat_j_i, cat_jm1_i, cat_jp1_i, cat_j_im1, cat_j_ip1, pot_j_i, pot_jm1_i, pot_jp1_i, pot_j_im1, pot_j_ip1)
+	for (long i = 0; i < membrane.m; ++i) {
+		for (long j = 0; j < membrane.n; ++j) {
 			// Reactant index
 			rea_j_i = Index1d(SpeciesEnum::mReactant, j, i);
 			pro_j_i = Index1d(SpeciesEnum::mProduct, j, i);
@@ -743,13 +763,13 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			if (i != 0 && j != 0 && i != membrane.m - 1 && j != membrane.n - 1) {
 				// Reactant
 				MembraneMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-										MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons.Reactant.DensityN, BoundaryEnum::bulk, SpeciesEnum::mReactant, Assign);
+										MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN, BoundaryEnum::bulk, SpeciesEnum::mReactant, Assign);
 				// Product
 				MembraneMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-										MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons.Product.DensityN, BoundaryEnum::bulk, SpeciesEnum::mProduct, Assign);
+										MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN, BoundaryEnum::bulk, SpeciesEnum::mProduct, Assign);
 				// Cation
 				MembraneMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-										MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons.SupportCation.DensityN, BoundaryEnum::bulk, SpeciesEnum::mCation, Assign);
+										MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN, BoundaryEnum::bulk, SpeciesEnum::mCation, Assign);
 				// Potential
 				MembranePotDerivative(i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
 										MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, BoundaryEnum::bulk, Assign);
@@ -757,13 +777,13 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (j == 0 && i != 0 && i != membrane.m - 1) {
 				// Reactant
 				MembraneMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-										MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons.Reactant.DensityN, BoundaryEnum::bottom, SpeciesEnum::mReactant, Assign);
+										MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN, BoundaryEnum::bottom, SpeciesEnum::mReactant, Assign);
 				// Product
 				MembraneMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-										MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons.Product.DensityN, BoundaryEnum::bottom, SpeciesEnum::mProduct, Assign);
+										MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN, BoundaryEnum::bottom, SpeciesEnum::mProduct, Assign);
 				// Cation
 				MembraneMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-										MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons.SupportCation.DensityN, BoundaryEnum::bottom, SpeciesEnum::mCation, Assign);
+										MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN, BoundaryEnum::bottom, SpeciesEnum::mCation, Assign);
 				// Potential
 				MembranePotDerivative(i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
 										MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, BoundaryEnum::bottom, Assign);
@@ -771,13 +791,13 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (j == membrane.n - 1 && i != 0 && i != membrane.m - 1) {
 				// Reactant
 				MembraneMTDerivative(i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-										MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons.Reactant.DensityN, BoundaryEnum::top, SpeciesEnum::mReactant, Assign);
+										MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN, BoundaryEnum::top, SpeciesEnum::mReactant, Assign);
 				// Product
 				MembraneMTDerivative(i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-										MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons.Product.DensityN, BoundaryEnum::top, SpeciesEnum::mProduct, Assign);
+										MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN, BoundaryEnum::top, SpeciesEnum::mProduct, Assign);
 				// Cation
 				MembraneMTDerivative(i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-										MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons.SupportCation.DensityN, BoundaryEnum::top, SpeciesEnum::mCation, Assign);
+										MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN, BoundaryEnum::top, SpeciesEnum::mCation, Assign);
 				// Potential
 				MembranePotDerivative(i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
 					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffProductB, membraneIons, BoundaryEnum::top, Assign);
@@ -785,28 +805,28 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i == 0 && j != 0 && j != membrane.n - 1) {
 				// Reactant
 				MembraneMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_ip1, rea_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons.Reactant.DensityN, BoundaryEnum::left, SpeciesEnum::mReactant, Assign);
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN, BoundaryEnum::left, SpeciesEnum::mReactant, Assign);
 				// Product
 				MembraneMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_ip1, pro_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons.Product.DensityN, BoundaryEnum::left, SpeciesEnum::mProduct, Assign);
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN, BoundaryEnum::left, SpeciesEnum::mProduct, Assign);
 				// Cation
 				MembraneMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_ip1, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons.SupportCation.DensityN, BoundaryEnum::left, SpeciesEnum::mCation, Assign);
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN, BoundaryEnum::left, SpeciesEnum::mCation, Assign);
 				// Potential
 				MembranePotDerivative(i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
 					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, BoundaryEnum::left, Assign);
 				
 			}
-			else if (i == membrane.n - 1 && j != 0 && j != membrane.n - 1) {
+			else if (i == membrane.m - 1 && j != 0 && j != membrane.n - 1) {
 				// Reactant
 				MembraneMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_i, rea_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons.Reactant.DensityN, BoundaryEnum::right, SpeciesEnum::mReactant, Assign);
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN, BoundaryEnum::right, SpeciesEnum::mReactant, Assign);
 				// Product
 				MembraneMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_i, pro_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons.Product.DensityN, BoundaryEnum::right, SpeciesEnum::mProduct, Assign);
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN, BoundaryEnum::right, SpeciesEnum::mProduct, Assign);
 				// Cation
 				MembraneMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_i, cat_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons.SupportCation.DensityN, BoundaryEnum::right, SpeciesEnum::mCation, Assign);
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN, BoundaryEnum::right, SpeciesEnum::mCation, Assign);
 				// Potential
 				MembranePotDerivative(i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
 					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, BoundaryEnum::right, Assign);
@@ -814,13 +834,13 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i == 0 && j == 0) {
 				// Reactant
 				MembraneMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_ip1, rea_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
-					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons.Reactant.DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::mReactant, Assign);
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::mReactant, Assign);
 				// Product
 				MembraneMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_ip1, pro_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
-					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons.Product.DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::mProduct, Assign);
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::mProduct, Assign);
 				// Cation
 				MembraneMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_ip1, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
-					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons.SupportCation.DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::mCation, Assign);
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::mCation, Assign);
 				// Potential
 				MembranePotDerivative(i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
 					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, BoundaryEnum::left_bottom_corner, Assign);
@@ -828,13 +848,13 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (j == 0 && i == membrane.m - 1) {
 				// Reactant
 				MembraneMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_i, rea_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
-					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons.Reactant.DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::mReactant, Assign);
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::mReactant, Assign);
 				// Product
 				MembraneMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_i, pro_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
-					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons.Product.DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::mProduct, Assign);
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::mProduct, Assign);
 				// Cation
 				MembraneMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_i, cat_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
-					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons.SupportCation.DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::mCation, Assign);
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::mCation, Assign);
 				// Potential
 				MembranePotDerivative(i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
 					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, BoundaryEnum::right_bottom_corner, Assign);
@@ -842,13 +862,13 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i == 0 && j == membrane.n - 1) {
 				// Reactant
 				MembraneMTDerivative(i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_ip1, rea_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons.Reactant.DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::mReactant, Assign);
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::mReactant, Assign);
 				// Product
 				MembraneMTDerivative(i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_ip1, pro_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons.Product.DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::mProduct, Assign);
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::mProduct, Assign);
 				// Cation
 				MembraneMTDerivative(i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_ip1, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons.SupportCation.DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::mCation, Assign);
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::mCation, Assign);
 				// Potential
 				MembranePotDerivative(i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
 					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, BoundaryEnum::left_upper_corner, Assign);
@@ -856,13 +876,13 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (j == membrane.n - 1 && i == membrane.m - 1) {
 				// Reactant
 				MembraneMTDerivative(i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_i, rea_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons.Reactant.DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::mReactant, Assign);
+					MemEquationCoefficient.CoeffReactantA, MemEquationCoefficient.CoeffReactantB, membraneIons[SpeciesEnum::mReactant].DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::mReactant, Assign);
 				// Product
 				MembraneMTDerivative(i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_i, pro_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons.Product.DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::mProduct, Assign);
+					MemEquationCoefficient.CoeffProductA, MemEquationCoefficient.CoeffProductB, membraneIons[SpeciesEnum::mProduct].DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::mProduct, Assign);
 				// Cation
 				MembraneMTDerivative(i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_i, cat_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons.SupportCation.DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::mCation, Assign);
+					MemEquationCoefficient.CoeffCationA, MemEquationCoefficient.CoeffCationB, membraneIons[SpeciesEnum::mCation].DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::mCation, Assign);
 				// Potential
 				MembranePotDerivative(i, j, rea_j_i, pro_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
 					MemEquationCoefficient.CoeffPotentialA, MemEquationCoefficient.CoeffPotentialB, membraneIons, BoundaryEnum::right_upper_corner, Assign);
@@ -873,10 +893,8 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 	
 	//Calculate solution
 #pragma omp parallel for private(rea_j_i, rea_jm1_i, rea_jp1_i, rea_j_im1, rea_j_ip1, pro_j_i, pro_jm1_i, pro_jp1_i, pro_j_im1, pro_j_ip1, ani_j_i, ani_jm1_i, ani_jp1_i, ani_j_im1, ani_j_ip1, cat_j_i, cat_jm1_i, cat_jp1_i, cat_j_im1, cat_j_ip1, pot_j_i, pot_jm1_i, pot_jp1_i, pot_j_im1, pot_j_ip1)
-	for (long i = 0; i < solution.m - 1; ++i) {
-		for (long j = 0; j < solution.n - 1; ++j) {
-			std::cout << i << std::endl;
-			
+	for (long i = 0; i < solution.m; ++i) {
+		for (long j = 0; j < solution.n; ++j) {			
 			// Reactant index
 			rea_j_i = Index1d(SpeciesEnum::sReactant, j, i);
 			pro_j_i = Index1d(SpeciesEnum::sProduct, j, i);
@@ -916,16 +934,16 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::bulk, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::bulk, SpeciesEnum::sReactant, Assign);
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::bulk, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::bulk, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_jp1_i, ani_jm1_i, ani_j_ip1, ani_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::bulk, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::bulk, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::bulk, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::bulk, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::bulk, Assign);
@@ -934,16 +952,16 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i > 0 && i < solution.m - 1 && j == solution.n - 1) {
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::top, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::top, SpeciesEnum::sReactant, Assign);
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::top, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::top, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_j_i, ani_jm1_i, ani_j_ip1, ani_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::top, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::top, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::top, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::top, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_im1,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::top, Assign);
@@ -951,17 +969,17 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i == 0 && j > 0 && j < solution.n - 1) {
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_ip1, rea_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::left, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::left, SpeciesEnum::sReactant, Assign);
 
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_ip1, pro_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::left, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::left, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_jp1_i, ani_jm1_i, ani_j_ip1, ani_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::left, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::left, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_ip1, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::left, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::left, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_ip1, pot_j_i,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::left, Assign);
@@ -969,16 +987,16 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i == solution.m - 1 && j > 0 && j < solution.n - 1) {
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_jm1_i, rea_j_i, rea_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::right, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::right, SpeciesEnum::sReactant, Assign);
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_jm1_i, pro_j_i, pro_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::right, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::right, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_jp1_i, ani_jm1_i, ani_j_i, ani_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::right, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::right, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_jm1_i, cat_j_i, cat_j_im1, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::right, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::right, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_jm1_i, pot_j_i, pot_j_im1,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::right, Assign);
@@ -986,16 +1004,16 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i == 0 && j == solution.n - 1) {
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_ip1, rea_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::sReactant, Assign);
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_ip1, pro_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_j_i, ani_jm1_i, ani_j_ip1, ani_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_ip1, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::left_upper_corner, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_ip1, pot_j_i,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::left_upper_corner, Assign);
@@ -1003,16 +1021,16 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i == solution.m - 1 && j == solution.n - 1) {
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_j_i, rea_jm1_i, rea_j_i, rea_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::sReactant, Assign);
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_j_i, pro_jm1_i, pro_j_i, pro_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_j_i, ani_jm1_i, ani_j_i, ani_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_j_i, cat_jm1_i, cat_j_i, cat_j_im1, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::right_upper_corner, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_j_i, pot_jm1_i, pot_j_i, pot_j_im1,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::right_upper_corner, Assign);
@@ -1020,16 +1038,16 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i > 0 && i < membrane.m && j == 0) {
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::bottom, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::bottom, SpeciesEnum::sReactant, Assign);
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::bottom, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::bottom, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_jp1_i, ani_j_i, ani_j_ip1, ani_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::bottom, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::bottom, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::bottom, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::bottom, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::bottom, Assign);
@@ -1037,16 +1055,16 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (j == 0 && i > membrane.m - 1 && i < solution.m - 1) {
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_ip1, rea_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::right_bottom, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::right_bottom, SpeciesEnum::sReactant, Assign);
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_ip1, pro_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::right_bottom, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::right_bottom, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_jp1_i, ani_j_i, ani_j_ip1, ani_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::right_bottom, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::right_bottom, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_ip1, cat_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::right_bottom, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::right_bottom, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_im1,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::right_bottom, Assign);
@@ -1054,16 +1072,16 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i == 0 && j == 0) {
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_ip1, rea_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::sReactant, Assign);
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_ip1, pro_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_jp1_i, ani_j_i, ani_j_ip1, ani_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_ip1, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::left_bottom_corner, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_ip1, pot_j_i,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::left_bottom_corner, Assign);
@@ -1071,16 +1089,16 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 			else if (i == solution.m - 1 && j == 0) {
 				//Reactant
 				SolutionMTDerivative(i, j, rea_j_i, rea_jp1_i, rea_j_i, rea_j_i, rea_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons.Reactant.DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::sReactant, Assign);
+					SolEquationCoefficient.CoeffReactantA, SolEquationCoefficient.CoeffReactantB, solutionIons[SpeciesEnum::sReactant].DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::sReactant, Assign);
 				//Product
 				SolutionMTDerivative(i, j, pro_j_i, pro_jp1_i, pro_j_i, pro_j_i, pro_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons.Product.DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::sProduct, Assign);
+					SolEquationCoefficient.CoeffProductA, SolEquationCoefficient.CoeffProductB, solutionIons[SpeciesEnum::sProduct].DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::sProduct, Assign);
 				//Anion
 				SolutionMTDerivative(i, j, ani_j_i, ani_jp1_i, ani_j_i, ani_j_i, ani_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons.SupportAnion.DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::sAnion, Assign);
+					SolEquationCoefficient.CoeffAnionA, SolEquationCoefficient.CoeffAnionB, solutionIons[SpeciesEnum::sAnion].DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::sAnion, Assign);
 				//Cation
 				SolutionMTDerivative(i, j, cat_j_i, cat_jp1_i, cat_j_i, cat_j_i, cat_j_im1, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
-					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons.SupportCation.DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::sCation, Assign);
+					SolEquationCoefficient.CoeffCationA, SolEquationCoefficient.CoeffCationB, solutionIons[SpeciesEnum::sCation].DensityN, BoundaryEnum::right_bottom_corner, SpeciesEnum::sCation, Assign);
 				//Potential
 				SolutionPotDerivative(i, j, rea_j_i, pro_j_i, ani_j_i, cat_j_i, pot_j_i, pot_jp1_i, pot_j_i, pot_j_i, pot_j_im1,
 					SolEquationCoefficient.CoeffPotentialA, SolEquationCoefficient.CoeffPotentialB, solutionIons, BoundaryEnum::right_bottom_corner, Assign);
@@ -1093,6 +1111,7 @@ void solver::initialiseMatrixA(void (solver::*Assign)(Tt))
 
 	// initialise MatrixA
 	MatrixA.setFromTriplets(MatrixAlist.begin(), MatrixAlist.end());
+
 }
 
 void solver::UpdateMatrixA()
@@ -1156,7 +1175,6 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 	double Dpot_j_ip1 = CB(5, i)*X(j_i) + CB(4, i)*(X(j_ip1) - X(j_im1));
 	double Dpot_j_i = CB(3, i)*X(j_i);
 
-
 	switch (boundary)
 	{
 	case BoundaryEnum::bulk: {
@@ -1176,11 +1194,12 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		switch (species)
 		{
 		case SpeciesEnum::mReactant: {
-			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			
+			double DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
 			double kf = ElecR.kf(DrivingPotential);
 			double kb = ElecR.kb(DrivingPotential);
 			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
-			double erDpot_j_i = -Dpot_jp1_i;
+			double erDpot_j_i = -erDpot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 			(this->*Assign)(Tt(j_i, j_im1, Dj_im1));
@@ -1195,22 +1214,22 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		}
 			break;
 		case SpeciesEnum::mProduct: {
-			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
 			double kf = ElecR.kf(DrivingPotential);
 			double kb = ElecR.kb(DrivingPotential);
 			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
-			double erDpot_j_i = -Dpot_jp1_i;
+			double erDpot_j_i = -erDpot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 			(this->*Assign)(Tt(j_i, j_im1, Dj_im1));
 			(this->*Assign)(Tt(j_i, j_ip1, Dj_ip1));
-			(this->*Assign)(Tt(j_i, j_i, Dj_i + Djm1_i + kb / membrane.dz*Signal.dt));
+			(this->*Assign)(Tt(j_i, j_i, Dj_i + Djm1_i - kf / membrane.dz*Signal.dt));
 			(this->*Assign)(Tt(j_i, pot_jp1_i, Dpot_jp1_i - erDpot_jp1_i));
 			(this->*Assign)(Tt(j_i, pot_j_im1, Dpot_j_im1));
 			(this->*Assign)(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 			(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i - erDpot_j_i));
 
-			(this->*Assign)(Tt(j_i, j_i - membrane.Getmxn(), -kf / membrane.dz*Signal.dt));
+			(this->*Assign)(Tt(j_i, j_i - membrane.Getmxn(), kb / membrane.dz*Signal.dt));
 		}	
 			break;
 		case SpeciesEnum::mCation: {
@@ -1254,7 +1273,7 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 
 			(this->*Assign)(Tt(j_i, srea_jp1_i, kf / membrane.dz*Signal.dt));
 		}
-									 break;
+			break;
 		case SpeciesEnum::mProduct: {
 			//Potential index
 			long spot_jp1_i = Index1d(SpeciesEnum::sPotential, 0, i);
@@ -1265,7 +1284,7 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			double kf = ProductTransR.kf(dE);
 			double kb = ProductTransR.kb(dE);
 			double ProductTransRate = kf*X(spro_jp1_i) - kb*X(j_i);
-			double inDspot_jp1_i = ProductTransR.minusAlfaNF_R_T*kf*X(spro_jp1_i) - ProductTransR.AlfaMinusOneNF_R_T*kb*X(j_i);
+			double inDspot_jp1_i = ProductTransR.minusAlfaNF_R_T*kf*X(spro_jp1_i) - ProductTransR.OneMinusAlfaNF_R_T*kb*X(j_i);
 			double inDpot_j_i = -inDspot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jm1_i, Djm1_i));
@@ -1280,7 +1299,7 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			(this->*Assign)(Tt(j_i, spro_jp1_i, kf / membrane.dz*Signal.dt));
 			(this->*Assign)(Tt(j_i, spot_jp1_i, inDspot_jp1_i / membrane.dz*Signal.dt));
 		}
-									break;
+			break;
 		case SpeciesEnum::mCation: {
 			//Potential index
 			long spot_jp1_i = Index1d(SpeciesEnum::sPotential, 0, i);
@@ -1291,7 +1310,7 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			double kf = CationTransR.kf(dE);
 			double kb = CationTransR.kb(dE);
 			double CationTransRate = kf*X(scat_jp1_i) - kb*X(j_i);
-			double inDspot_jp1_i = CationTransR.minusAlfaNF_R_T*kf*X(scat_jp1_i) - CationTransR.AlfaMinusOneNF_R_T*kb*X(j_i);
+			double inDspot_jp1_i = CationTransR.minusAlfaNF_R_T*kf*X(scat_jp1_i) - CationTransR.OneMinusAlfaNF_R_T*kb*X(j_i);
 			double inDpot_j_i = -inDspot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jm1_i, Djm1_i));
@@ -1343,11 +1362,11 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		switch (species)
 		{
 		case SpeciesEnum::mReactant: {
-			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
 			double kf = ElecR.kf(DrivingPotential);
 			double kb = ElecR.kb(DrivingPotential);
 			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
-			double erDpot_j_i = -Dpot_jp1_i;
+			double erDpot_j_i = -erDpot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 			(this->*Assign)(Tt(j_i, j_ip1, Dj_ip1));
@@ -1360,20 +1379,20 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		}
 			break;
 		case SpeciesEnum::mProduct: {
-			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
 			double kf = ElecR.kf(DrivingPotential);
 			double kb = ElecR.kb(DrivingPotential);
 			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
-			double erDpot_j_i = -Dpot_jp1_i;
+			double erDpot_j_i = -erDpot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 			(this->*Assign)(Tt(j_i, j_ip1, Dj_ip1));
-			(this->*Assign)(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1 + kb / membrane.dz*Signal.dt));
+			(this->*Assign)(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_im1 - kf / membrane.dz*Signal.dt));
 			(this->*Assign)(Tt(j_i, pot_jp1_i, Dpot_jp1_i - erDpot_jp1_i));
 			(this->*Assign)(Tt(j_i, pot_j_ip1, Dpot_j_ip1));
 			(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_im1 - erDpot_j_i));
 
-			(this->*Assign)(Tt(j_i, j_i - membrane.Getmxn(), -kf / membrane.dz*Signal.dt));
+			(this->*Assign)(Tt(j_i, j_i - membrane.Getmxn(), kb / membrane.dz*Signal.dt));
 			}
 			break;
 		case SpeciesEnum::mCation: {
@@ -1392,17 +1411,16 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			break;
 		}
 	}
-		
 		break;
 	case BoundaryEnum::right_bottom_corner: {
 		switch (species)
 		{
 		case SpeciesEnum::mReactant: {
-			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
 			double kf = ElecR.kf(DrivingPotential);
 			double kb = ElecR.kb(DrivingPotential);
 			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
-			double erDpot_j_i = -Dpot_jp1_i;
+			double erDpot_j_i = -erDpot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 			(this->*Assign)(Tt(j_i, j_im1, Dj_im1));
@@ -1415,20 +1433,20 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		}
 			break;
 		case SpeciesEnum::mProduct: {
-			double DrivingPotential = ElecR.DrivingPotential((X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
+			double DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (X(pot_jp1_i) - X(pot_j_i)) / membrane.dz);
 			double kf = ElecR.kf(DrivingPotential);
 			double kb = ElecR.kb(DrivingPotential);
 			double erDpot_jp1_i = kf*ElecR.minusAlfaNF_R_T*ElecR.DrivingPotentialCoeff / membrane.dz;
-			double erDpot_j_i = -Dpot_jp1_i;
+			double erDpot_j_i = -erDpot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
 			(this->*Assign)(Tt(j_i, j_im1, Dj_im1));
-			(this->*Assign)(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_ip1 + kb / membrane.dz*Signal.dt));
+			(this->*Assign)(Tt(j_i, j_i, Dj_i + Djm1_i + Dj_ip1 - kf / membrane.dz*Signal.dt));
 			(this->*Assign)(Tt(j_i, pot_jp1_i, Dpot_jp1_i - erDpot_jp1_i));
 			(this->*Assign)(Tt(j_i, pot_j_im1, Dpot_j_im1));
 			(this->*Assign)(Tt(j_i, pot_j_i, Dpot_j_i + Dpot_jm1_i + Dpot_j_ip1 - erDpot_j_i));
 
-			(this->*Assign)(Tt(j_i, j_i - membrane.Getmxn(), -kf / membrane.dz*Signal.dt));
+			(this->*Assign)(Tt(j_i, j_i - membrane.Getmxn(), kb / membrane.dz*Signal.dt));
 		}
 			break;
 		case SpeciesEnum::mCation: {
@@ -1453,7 +1471,7 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 		{
 		case SpeciesEnum::mReactant: {
 			//Reactant index
-			long srea_jp1_i = solution.n*i + 4 * membrane.Getmxn();
+			long srea_jp1_i = Index1d(SpeciesEnum::sReactant, 0, i);
 			//Reactant transfer rate
 			double kf = ReactantTransR.kf(0);
 			double kb = ReactantTransR.kb(0);
@@ -1479,7 +1497,7 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			double kf = ProductTransR.kf(dE);
 			double kb = ProductTransR.kb(dE);
 			double ProductTransRate = kf*X(spro_jp1_i) - kb*X(j_i);
-			double inDspot_jp1_i = ProductTransR.minusAlfaNF_R_T*kf*X(spro_jp1_i) - ProductTransR.AlfaMinusOneNF_R_T*kb*X(j_i);
+			double inDspot_jp1_i = ProductTransR.minusAlfaNF_R_T*kf*X(spro_jp1_i) - ProductTransR.OneMinusAlfaNF_R_T*kb*X(j_i);
 			double inDpot_j_i = -inDspot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jm1_i, Djm1_i));
@@ -1503,7 +1521,7 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			double kf = CationTransR.kf(dE);
 			double kb = CationTransR.kb(dE);
 			double CationTransRate = kf*X(scat_jp1_i) - kb*X(j_i);
-			double inDspot_jp1_i = CationTransR.minusAlfaNF_R_T*kf*X(scat_jp1_i) - CationTransR.AlfaMinusOneNF_R_T*kb*X(j_i);
+			double inDspot_jp1_i = CationTransR.minusAlfaNF_R_T*kf*X(scat_jp1_i) - CationTransR.OneMinusAlfaNF_R_T*kb*X(j_i);
 			double inDpot_j_i = -inDspot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jm1_i, Djm1_i));
@@ -1556,7 +1574,7 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			double kf = ProductTransR.kf(dE);
 			double kb = ProductTransR.kb(dE);
 			double ProductTransRate = kf*X(spro_jp1_i) - kb*X(j_i);
-			double inDspot_jp1_i = ProductTransR.minusAlfaNF_R_T*kf*X(spro_jp1_i) - ProductTransR.AlfaMinusOneNF_R_T*kb*X(j_i);
+			double inDspot_jp1_i = ProductTransR.minusAlfaNF_R_T*kf*X(spro_jp1_i) - ProductTransR.OneMinusAlfaNF_R_T*kb*X(j_i);
 			double inDpot_j_i = -inDspot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jm1_i, Djm1_i));
@@ -1580,7 +1598,7 @@ void solver::MembraneMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			double kf = CationTransR.kf(dE);
 			double kb = CationTransR.kb(dE);
 			double CationTransRate = kf*X(scat_jp1_i) - kb*X(j_i);
-			double inDspot_jp1_i = CationTransR.minusAlfaNF_R_T*kf*X(scat_jp1_i) - CationTransR.AlfaMinusOneNF_R_T*kb*X(j_i);
+			double inDspot_jp1_i = CationTransR.minusAlfaNF_R_T*kf*X(scat_jp1_i) - CationTransR.OneMinusAlfaNF_R_T*kb*X(j_i);
 			double inDpot_j_i = -inDspot_jp1_i;
 
 			(this->*Assign)(Tt(j_i, jm1_i, Djm1_i));
@@ -1674,7 +1692,7 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			double dE = X(pot_j_i) - X(mpot_jm1_i);
 			double kf = ProductTransR.kf(dE);
 			double kb = ProductTransR.kb(dE);
-			double trDmpot_jm1_i = ProductTransR.minusAlfaNF_R_T*kf*X(j_i) - ProductTransR.AlfaMinusOneNF_R_T*kb*X(mpro_jm1_i);
+			double trDmpot_jm1_i = ProductTransR.minusAlfaNF_R_T*kf*X(j_i) - ProductTransR.OneMinusAlfaNF_R_T*kb*X(mpro_jm1_i);
 			double trDpot_j_i = -trDmpot_jm1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
@@ -1709,7 +1727,7 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			//Cation transfer rate
 			double kf = CationTransR.kf(dE);
 			double kb = CationTransR.kb(dE);
-			double trDmpot_jm1_i = CationTransR.minusAlfaNF_R_T*kf*X(j_i) - CationTransR.AlfaMinusOneNF_R_T*kb*X(mcat_jm1_i);
+			double trDmpot_jm1_i = CationTransR.minusAlfaNF_R_T*kf*X(j_i) - CationTransR.OneMinusAlfaNF_R_T*kb*X(mcat_jm1_i);
 			double trDpot_j_i = -trDmpot_jm1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
@@ -1790,7 +1808,7 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			double dE = X(pot_j_i) - X(mpot_jm1_i);
 			double kf = ProductTransR.kf(dE);
 			double kb = ProductTransR.kb(dE);
-			double trDmpot_jm1_i = ProductTransR.minusAlfaNF_R_T*kf*X(j_i) - ProductTransR.AlfaMinusOneNF_R_T*kb*X(mpro_jm1_i);
+			double trDmpot_jm1_i = ProductTransR.minusAlfaNF_R_T*kf*X(j_i) - ProductTransR.OneMinusAlfaNF_R_T*kb*X(mpro_jm1_i);
 			double trDpot_j_i = -trDmpot_jm1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
@@ -1821,7 +1839,7 @@ void solver::SolutionMTDerivative(long i, long j, long j_i, long jp1_i, long jm1
 			//Cation transfer rate
 			double kf = CationTransR.kf(dE);
 			double kb = CationTransR.kb(dE);
-			double trDmpot_jm1_i = CationTransR.minusAlfaNF_R_T*kf*X(j_i) - CationTransR.AlfaMinusOneNF_R_T*kb*X(mcat_jm1_i);
+			double trDmpot_jm1_i = CationTransR.minusAlfaNF_R_T*kf*X(j_i) - CationTransR.OneMinusAlfaNF_R_T*kb*X(mcat_jm1_i);
 			double trDpot_j_i = -trDmpot_jm1_i;
 
 			(this->*Assign)(Tt(j_i, jp1_i, Djp1_i));
@@ -1881,8 +1899,8 @@ inline double solver::BulkPotEquation(long i, long j, double Xrea_j_i, double Xp
 		CA(1, j)*Xpot_jm1_i + CA(2, j)*Xpot_jp1_i
 		+ CB(1, i)*Xpot_j_im1 + CB(2, i)*Xpot_j_ip1
 		+ (CA(0, j) + CB(0, i))*Xpot_j_i
-		+ (I.Reactant.Z*Xrea_j_i + I.Product.Z*Xpro_j_i 
-		+ I.SupportAnion.Z*Xani_j_i + I.SupportCation.Z*Xcat_j_i 
+		+ (solutionIons[SpeciesEnum::sReactant].Z*Xrea_j_i + solutionIons[SpeciesEnum::sProduct].Z*Xpro_j_i
+		+ solutionIons[SpeciesEnum::sAnion].Z*Xani_j_i + solutionIons[SpeciesEnum::sCation].Z*Xcat_j_i
 		+ I.CxZImmobileCharge)*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 
 }
@@ -1895,10 +1913,10 @@ void solver:: SolutionPotDerivative(long i, long j, long rea_j_i, long pro_j_i, 
 	double Dpot_j_im1 = CB(1, i);
 	double Dpot_j_ip1 = CB(2, i);
 	double Dpot_j_i = CA(0, j) + CB(0, i);
-	double Drea_j_i = I.Reactant.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-	double Dpro_j_i = I.Product.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-	double Dani_j_i = I.SupportAnion.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-	double Dcat_j_i = I.SupportCation.Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Drea_j_i = I[SpeciesEnum::sReactant].Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dpro_j_i = I[SpeciesEnum::sProduct].Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dani_j_i = I[SpeciesEnum::sAnion].Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dcat_j_i = I[SpeciesEnum::sCation].Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 	
 	switch (boundary)
 	{
@@ -1993,9 +2011,9 @@ void solver::MembranePotDerivative(long i, long j, long rea_j_i, long pro_j_i, l
 	double Dpot_j_im1 = CB(1, i);
 	double Dpot_j_ip1 = CB(2, i);
 	double Dpot_j_i = CA(0, j) + CB(0, i);
-	double Drea_j_i = I.Reactant.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-	double Dpro_j_i = I.Product.Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
-	double Dcat_j_i = I.SupportCation.Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Drea_j_i = I[SpeciesEnum::mReactant].Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dpro_j_i = I[SpeciesEnum::mProduct].Z*I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
+	double Dcat_j_i = I[SpeciesEnum::mCation].Z* I.ReciprocalEpsilon_rEpsilon_0*Thermo.F;
 
 	switch (boundary)
 	{
@@ -2120,23 +2138,23 @@ void solver::SaveDensity()
 	};
 	// membrane
 	// mReactant
-	SD(SpeciesEnum::mReactant, membraneIons.Reactant.DensityN, membrane.m, membrane.n);
+	SD(SpeciesEnum::mReactant, membraneIons[SpeciesEnum::mReactant].DensityN, membrane.m, membrane.n);
 	// mProduct
-	SD(SpeciesEnum::mProduct, membraneIons.Product.DensityN, membrane.m, membrane.n);
+	SD(SpeciesEnum::mProduct, membraneIons[SpeciesEnum::mProduct].DensityN, membrane.m, membrane.n);
 	// mCation
-	SD(SpeciesEnum::mCation, membraneIons.SupportCation.DensityN, membrane.m, membrane.n);
+	SD(SpeciesEnum::mCation, membraneIons[SpeciesEnum::mCation].DensityN, membrane.m, membrane.n);
 	// mPotential
 	SD(SpeciesEnum::mPotential, membraneIons.Potential.DensityN, membrane.m, membrane.n);
 
 	// solution
 	// sReactant
-	SD(SpeciesEnum::sReactant, solutionIons.Reactant.DensityN, solution.m, solution.n);
+	SD(SpeciesEnum::sReactant, solutionIons[SpeciesEnum::sReactant].DensityN, solution.m, solution.n);
 	// sProduct
-	SD(SpeciesEnum::sProduct, solutionIons.Product.DensityN, solution.m, solution.n);
+	SD(SpeciesEnum::sProduct, solutionIons[SpeciesEnum::sProduct].DensityN, solution.m, solution.n);
 	// sCation
-	SD(SpeciesEnum::sCation, solutionIons.SupportCation.DensityN, solution.m, solution.n);
+	SD(SpeciesEnum::sCation, solutionIons[SpeciesEnum::sCation].DensityN, solution.m, solution.n);
 	// sAnion
-	SD(SpeciesEnum::sAnion, solutionIons.SupportAnion.DensityN, solution.m, solution.n);
+	SD(SpeciesEnum::sAnion, solutionIons[SpeciesEnum::sAnion].DensityN, solution.m, solution.n);
 	// sPotential
 	SD(SpeciesEnum::sPotential, solutionIons.Potential.DensityN, solution.m, solution.n);
 }
@@ -2147,15 +2165,22 @@ double solver::FaradaicCurrent() const
 
 #pragma omp parallel for private(DrivingPotential, kf, kb, reactionRate) reduction(+ : I)
 	for (long i = 0; i < membrane.m; ++i) {
-		DrivingPotential = ElecR.DrivingPotential((membraneIons.Potential.DensityN(1, i) - membraneIons.Potential.DensityN(0, i)) / membrane.dz);
+		DrivingPotential = ElecR.DrivingPotential(Signal.AppliedPotential, (membraneIons.Potential.DensityN(1, i) - membraneIons.Potential.DensityN(0, i)) / membrane.dz);
 		kf = ElecR.kf(DrivingPotential);
 		kb = ElecR.kb(DrivingPotential);
-		reactionRate = kf*membraneIons.Product.DensityN(0, i) - kb*membraneIons.Reactant.DensityN(0, i);
+		reactionRate = kf*membraneIons[SpeciesEnum::mProduct].DensityN(0, i) - kb*membraneIons[SpeciesEnum::mReactant].DensityN(0, i);
 
 		I += reactionRate*membrane.RR(0, i);
 	}
 
-	I *= 6.28*(membraneIons.Reactant.Z - membraneIons.Product.Z)*Thermo.F * membrane.dr;
+	I *= 6.28*(membraneIons[SpeciesEnum::mReactant].Z - membraneIons[SpeciesEnum::mProduct].Z)*Thermo.F * membrane.dr/1000;
 	
 	return I;
 }
+
+/*double solver::TotalCurrent() const
+{
+	for (int i = 0; i < membrane.m; ++i) {
+
+	}
+}*/

@@ -26,6 +26,7 @@ public:
 	void initialise();
 	void solve();
 	double FaradaicCurrent() const;
+	//double TotalCurrent() const;
 
 private:
 	SpMatrixXd MatrixA; // Ax = b for Fc, each element inside is initialised as 0

@@ -21,7 +21,7 @@ OneDIndex::OneDIndex(const mesh& membrane, const mesh& solution)
 			InnerIndex[k][i].resize(solution.n);
 
 			for (long j = 0; j < solution.n; ++j) {
-				InnerIndex[k][i][j] = i*membrane.n + j + membrane.Getmxn()*SpeciesEnum::sReactant + solution.Getmxn()*(k - SpeciesEnum::sReactant);
+				InnerIndex[k][i][j] = i*solution.n + j + membrane.Getmxn()*SpeciesEnum::sReactant + solution.Getmxn()*(k - SpeciesEnum::sReactant);
 			}
 		}
 	}
@@ -46,7 +46,7 @@ TwoDIndex::TwoDIndex(const mesh& membrane, const mesh& solution)
 		for (long i = 0; i < solution.m; ++i) {
 			for (long j = 0; j < solution.n; ++j) {
 
-				long index = i*membrane.n + j + membrane.Getmxn()*SpeciesEnum::sReactant + solution.Getmxn()*(k - SpeciesEnum::sReactant);
+				long index = i*solution.n + j + membrane.Getmxn()*SpeciesEnum::sReactant + solution.Getmxn()*(k - SpeciesEnum::sReactant);
 				InnerIndex[index] = std::make_tuple(static_cast<SpeciesEnum::Species>(k), j, i);
 			}
 		}

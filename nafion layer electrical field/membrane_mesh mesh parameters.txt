@@ -1,4 +1,0 @@
-number of R nodes: 50
-dr, cm: 0.001
-number of z nodes: 200
-dz, cm: 5e-06

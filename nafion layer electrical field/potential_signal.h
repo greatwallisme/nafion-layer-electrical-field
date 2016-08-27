@@ -5,14 +5,14 @@ class PotentialSignal
 {
 public:
 	PotentialSignal(double fE0, double fEend, double fdE, double fdt):
-		E0(fE0), Eend(fEend), dE(fdE), dt(fdt){}
+		E0(fE0), Eend(fEend), dE(fdE), dt(fdt), AppliedPotential(fE0){}
 	virtual ~PotentialSignal() {};
-	virtual double AppliedPotential(long i) = 0;
+	virtual void CalculateAppliedPotential(long i) = 0;
 	virtual void RecordCurrent(double I) = 0;
 	virtual bool IsPeak() const = 0;
 	virtual void ExportCurrent() const = 0;
 	virtual const long GetPeriodNumber() const = 0;
-	virtual double GetAppliedPotential() const = 0;
+	double AppliedPotential;
 	const double dt; // delta time between each time node, s
 
 protected:
@@ -27,12 +27,12 @@ class SquareWave : public PotentialSignal
 public:
 	SquareWave(double fE0, double fEend, double fdE, double fdt, int fswf, double fswamp);
 	virtual ~SquareWave();
-	virtual double AppliedPotential(long i);
+	virtual void CalculateAppliedPotential(long i);
 	virtual void RecordCurrent(double I);
 	virtual bool IsPeak() const;
 	virtual void ExportCurrent() const;
 	virtual const long GetPeriodNumber() const { return q; } // return the number of period
-	virtual double GetAppliedPotential() const { return Eq; }
+
 
 private:
 	const int swf; // the frequency of square wave potential, Hz

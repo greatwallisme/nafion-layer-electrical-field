@@ -25,7 +25,7 @@ SquareWave::~SquareWave()
 	delete lastIo;
 }
 
-double SquareWave::AppliedPotential(long i)
+void SquareWave::CalculateAppliedPotential(long i)
 {
 	double tq = (i - 1)*dt; // current time
 	double tq1 = i*dt; // next time
@@ -34,7 +34,7 @@ double SquareWave::AppliedPotential(long i)
 			   // square wave voltammetry
 	if (i == 0) {
 		Eqm = E0;
-		Eq = E0;
+		 AppliedPotential = E0;
 	}
 	else {
 		if (WaveJudge == -1 && WaveJudge1 == 1) {
@@ -45,11 +45,11 @@ double SquareWave::AppliedPotential(long i)
 		// calculate Eq
 		if (tq*swf - floor(tq*swf) < 0.5) {
 			WaveJudge = 1;
-			Eq = Eqm + swamp;
+			 AppliedPotential = Eqm + swamp;
 		}
 		else {
 			WaveJudge = -1;
-			Eq = Eqm - swamp;
+			 AppliedPotential = Eqm - swamp;
 		}
 	}
 
@@ -60,8 +60,6 @@ double SquareWave::AppliedPotential(long i)
 	else {
 		WaveJudge1 = -1;
 	}
-
-	return Eq;
 }
 
 void SquareWave::RecordCurrent(double I)
