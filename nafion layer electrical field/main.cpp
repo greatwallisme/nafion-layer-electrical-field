@@ -20,6 +20,9 @@ int main()
 	mesh membrane(10, 50e-4, 100, 0.1e-4);
 	mesh solution(20, 50e-4, 25, 40e-4);
 
+	membrane.PrintMesh("Membrane");
+	solution.PrintMesh("Solution");
+
 	std::map<SpeciesEnum::Species, Ion*> mIons, sIons;
 
 	// Meaning of arguments for Ion constructor:
@@ -27,7 +30,7 @@ int main()
 
 	nernst_equation ElecNE(0, 1, 1, 0.5);
 	nernst_equation ProductTransNE(0, 1, 1, 0.5);
-	nernst_equation CationTransNE(0, 1, -0.1, 0.5);
+	nernst_equation CationTransNE(0, 1, 0.1, 0.5);
 	nernst_equation ReactantTransNE(0, 0, 1, 0.5);
 
 	Ion mReactant(1e-9, 0, 0.1, membrane); mIons.insert(std::pair<SpeciesEnum::Species, Ion*>(SpeciesEnum::mReactant, &mReactant));

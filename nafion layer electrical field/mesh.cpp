@@ -15,6 +15,7 @@ mesh::mesh(int fm, double fdr, int fn, double fdz) :
 			ZZ(j, i) = Z(j, i) + 0.5*dz;
 		}
 	}
+
 }
 
 mesh::~mesh()

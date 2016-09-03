@@ -1,0 +1,4 @@
+number of R nodes: 20
+dr, cm: 0.005
+number of z nodes: 25
+dz, cm: 0.004
