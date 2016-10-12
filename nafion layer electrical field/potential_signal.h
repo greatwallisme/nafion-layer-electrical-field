@@ -1,5 +1,6 @@
 #pragma once
 #include "mesh.h"
+#include <string>
 
 class PotentialSignal
 {
@@ -10,7 +11,7 @@ public:
 	virtual void CalculateAppliedPotential(long i) = 0;
 	virtual void RecordCurrent(double I) = 0;
 	virtual bool IsPeak() const = 0;
-	virtual void ExportCurrent() const = 0;
+	virtual void ExportCurrent(std::string fileName) const = 0;
 	virtual const long GetPeriodNumber() const = 0;
 	double AppliedPotential;
 	const double dt; // delta time between each time node, s
@@ -30,7 +31,7 @@ public:
 	virtual void CalculateAppliedPotential(long i);
 	virtual void RecordCurrent(double I);
 	virtual bool IsPeak() const;
-	virtual void ExportCurrent() const;
+	virtual void ExportCurrent(std::string fileName) const;
 	virtual const long GetPeriodNumber() const { return q; } // return the number of period
 
 
@@ -51,5 +52,25 @@ private:
 	int WaveJudge; // determine which half wave the past time is in
 	int WaveJudge1; // determine which half wave the comming time node is in
 	double Iqr[2] = { 0, 0 }; // record the current at the  end of each half period
+};
+
+class ConstantPotential : public PotentialSignal
+{
+public:
+	ConstantPotential(double fE0, double fdt, double ft);
+	virtual ~ConstantPotential();
+	virtual void CalculateAppliedPotential(long i);
+	virtual void RecordCurrent(double I);
+	virtual bool IsPeak() const;
+	virtual void ExportCurrent(std::string fileName) const;
+	virtual const long GetPeriodNumber() const { return q; } // return the number of period
+
+private:
+	const long q; // number of time nodes
+	double* tr; // recorded time container
+	double* I;
+	double t; // the time node
+
+	int PeriodCounter; // count the number of period
 };
 

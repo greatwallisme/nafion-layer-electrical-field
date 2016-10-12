@@ -41,8 +41,8 @@ int main()
 
 	Ion sReactant(1e-5, 0, 0, solution); sIons.insert(std::pair<SpeciesEnum::Species, Ion*>(SpeciesEnum::sReactant, &sReactant));
 	Ion sProduct(1e-5, 1, 0, solution); sIons.insert(std::pair<SpeciesEnum::Species, Ion*>(SpeciesEnum::sProduct, &sProduct));
-	Ion sCation(1e-5, 1, 0.01, solution); sIons.insert(std::pair<SpeciesEnum::Species, Ion*>(SpeciesEnum::sCation, &sCation));
-	Ion sAnion(1e-5, -1, 0.01, solution); sIons.insert(std::pair<SpeciesEnum::Species, Ion*>(SpeciesEnum::sAnion, &sAnion));
+	Ion sCation(1e-5, 1, 0.0000001, solution); sIons.insert(std::pair<SpeciesEnum::Species, Ion*>(SpeciesEnum::sCation, &sCation));
+	Ion sAnion(1e-5, -1, 0.0000001, solution); sIons.insert(std::pair<SpeciesEnum::Species, Ion*>(SpeciesEnum::sAnion, &sAnion));
 	Ion sPotential(0, 0, 0, solution);
 
 	IonSystem mIonSys(12.0, 1.0, mIons, mPotential, ImmobileCharge); // membrane phase has no Anion, using Cation to replace the argument
@@ -53,12 +53,36 @@ int main()
 	InterfaceReaction CationIR(CationTransNE);
 	InterfaceReaction ReactantIR(ReactantTransNE);
 
+	ConstantPotential ConstantE(-0.5, 0.01, 100);
 	SquareWave ESignal(-0.5, 0.3, 0.002, 0.001, 25, 0.02);
 	
+	solver ConstantESolver(membrane, solution, mIonSys, sIonSys, ConstantE, ElecNE, ElecR, CationIR, ProductIR, ReactantIR);
 	solver Solver(membrane, solution, mIonSys, sIonSys, ESignal, ElecNE, ElecR, CationIR, ProductIR, ReactantIR);
 
-	Solver.initialise();
 	double I; // record current
+
+	ConstantESolver.initialise();
+	std::cout << "Start Calculate Constant Potential Step\n";
+	for (long i = 0; i < ConstantE.GetPeriodNumber(); ++i) {
+		ConstantE.CalculateAppliedPotential(i);
+		ConstantESolver.solve();
+		I = ConstantESolver.FaradaicCurrent();
+		ConstantE.RecordCurrent(I);
+	}
+	ConstantE.ExportCurrent("ConstE Current.txt");
+	mReactant.PrintDense("ConstE mReactant Concentration.txt");
+	mProduct.PrintDense("ConstE mProduct Concentration.txt");
+	mCation.PrintDense("ConstE mCation Concentration.txt");
+	mPotential.PrintDense("ConstE mPotential Distribution.txt");
+	sReactant.PrintDense("ConstE sReactant Concentration.txt");
+	sProduct.PrintDense("ConstE sProduct Concentration.txt");
+	sCation.PrintDense("ConstE sCation Concentration.txt");
+	sAnion.PrintDense("ConstE sAnion Concentration.txt");
+	sPotential.PrintDense("ConstE sPotential Distribution.txt");
+
+
+	Solver.initialise();
+	
 	for (long i = 0; i < ESignal.GetPeriodNumber(); ++i) {
 		ESignal.CalculateAppliedPotential(i);
 		Solver.solve();
@@ -77,7 +101,7 @@ int main()
 			sPotential.PrintDense("sPotential Distribution.txt");
 		}
 	}
-	ESignal.ExportCurrent();
+	ESignal.ExportCurrent("SW Current.txt");
 	
 	std::cout << "\nComplete. Enter Any Key To Terminate";
 	std::cin.get();

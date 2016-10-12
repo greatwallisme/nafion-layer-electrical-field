@@ -85,9 +85,9 @@ bool SquareWave::IsPeak() const
 		return false;
 }
 
-void SquareWave::ExportCurrent() const
+void SquareWave::ExportCurrent(std::string fileName) const
 {
-	std::ofstream fcout("current.txt");
+	std::ofstream fcout(fileName);
 
 	if (fcout.is_open()) {
 		fcout << "parameters: "
@@ -101,6 +101,61 @@ void SquareWave::ExportCurrent() const
 
 		for (int i = 0; i < PeriodCounter; ++i) {
 			fcout << Er[i] << " " << Is[i] << " " << Io[i] << "\n";
+		}
+	}
+	else {
+		std::cerr << "Cannot open the file to save current";
+		exit(1);
+	}
+}
+
+ConstantPotential::ConstantPotential(double fE0, double fdt, double ft) :
+	PotentialSignal(fE0, fE0, 0, fdt), q(static_cast<long>(ceil(ft/fdt)) + 1), PeriodCounter(0), t(0 - dt)
+{
+	long RcdSize = long(ceil(q / 10));
+	I = new double[RcdSize]; // recorded current container
+	tr = new double[RcdSize]; // recorded time container
+}
+
+ConstantPotential::~ConstantPotential()
+{
+	delete tr;
+	delete I;
+}
+
+void ConstantPotential::CalculateAppliedPotential(long i)
+{
+	AppliedPotential = E0;
+	t += dt;
+}
+
+void ConstantPotential::RecordCurrent(double fI)
+{
+	if (PeriodCounter % 10 == 0) {
+		I[PeriodCounter / 10] = fI;
+		tr[PeriodCounter / 10] = t;
+	}
+}
+
+bool ConstantPotential::IsPeak() const
+{
+	return 0;
+}
+
+void ConstantPotential::ExportCurrent(std::string fileName) const
+{
+	std::ofstream fcout(fileName);
+
+	if (fcout.is_open()) {
+		fcout << "parameters: "
+			<< "\nconstant potential, V: " << E0;
+
+		fcout << "\ntime/s " << "current/A ";
+
+		long dataLen = PeriodCounter / 10;
+
+		for (int i = 0; i < dataLen; ++i) {
+			fcout << tr[i] << " " << I[i] << " \n";
 		}
 	}
 	else {
